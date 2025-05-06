@@ -1,7 +1,18 @@
 from pydantic import BaseModel
 
-from nlotrajectories.core.geometry import DotGeometry, RectangleGeometry, TriangleGeometry, GoalMode, Shape
-from nlotrajectories.core.dynamics import Dynamics, PointMass1stOrder, PointMass2ndOrder, Unicycle
+from nlotrajectories.core.dynamics import (
+    Dynamics,
+    PointMass1stOrder,
+    PointMass2ndOrder,
+    Unicycle,
+)
+from nlotrajectories.core.geometry import (
+    DotGeometry,
+    GoalMode,
+    RectangleGeometry,
+    Shape,
+    TriangleGeometry,
+)
 
 
 class BodyConfig(BaseModel):
@@ -17,7 +28,7 @@ class BodyConfig(BaseModel):
         if self.shape == Shape.RECTANGLE:
             return RectangleGeometry(self.length, self.width, self.goal_mode)
         return TriangleGeometry(self.length, self.width, self.goal_mode)
-    
+
     def create_dynamics(self):
         if self.dynamic == Dynamics.POINT_1ST:
             return PointMass1stOrder()

@@ -1,7 +1,7 @@
 import casadi as ca
 import pytest
 
-from nlotrajectories.core.geometry import RectangleGeometry, GoalMode
+from nlotrajectories.core.geometry import GoalMode, RectangleGeometry
 
 
 @pytest.fixture
@@ -17,7 +17,8 @@ def goal():
 @pytest.fixture
 def sdf_func():
     def dummy_sdf(x, y):
-        return ca.sqrt((x - 0.0)**2 + (y - 0.0)**2) - 1.0
+        return ca.sqrt((x - 0.0) ** 2 + (y - 0.0) ** 2) - 1.0
+
     return dummy_sdf
 
 

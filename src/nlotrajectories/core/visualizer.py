@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-import numpy as np
+
 
 def plot_trajectory(X_opt, geometry, title="Trajectory", goal=None, obstacle_draw_fn=None, cfg=None):
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     N = X_opt.shape[1]
 
     for k in range(N):
@@ -19,4 +19,4 @@ def plot_trajectory(X_opt, geometry, title="Trajectory", goal=None, obstacle_dra
     ax.grid(True)
     ax.set_title(title)
     plt.legend()
-    plt.savefig('foo2.png', bbox_inches='tight')
+    plt.savefig("foo2.png", bbox_inches="tight")

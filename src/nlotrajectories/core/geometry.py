@@ -81,10 +81,7 @@ class PolygonGeometry(IRobotGeometry):
     def transform(self, pose: ca.MX) -> list[tuple[ca.MX, ca.MX]]:
         x, y, theta = pose[0], pose[1], pose[2]
         return [
-            (
-                x + ca.cos(theta) * px - ca.sin(theta) * py,
-                y + ca.sin(theta) * px + ca.cos(theta) * py
-            )
+            (x + ca.cos(theta) * px - ca.sin(theta) * py, y + ca.sin(theta) * px + ca.cos(theta) * py)
             for px, py in self.body_points
         ]
 
@@ -101,9 +98,14 @@ class PolygonGeometry(IRobotGeometry):
 
 class RectangleGeometry(PolygonGeometry):
     def __init__(self, length: float, width: float, goal_mode: GoalMode = GoalMode.CENTER):
-        l = length / 2
-        w = width / 2
-        body_points = [(-l, -w), (-l, w), (l, w), (l, -w)]
+        length_bias = length / 2
+        width_bias = width / 2
+        body_points = [
+            (-length_bias, -width_bias),
+            (-length_bias, width_bias),
+            (length_bias, width_bias),
+            (length_bias, -width_bias),
+        ]
         super().__init__(body_points, goal_mode)
 
 
