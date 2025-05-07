@@ -13,8 +13,10 @@ class RunBenchmark:
         x_goal: ca.MX,
         N: int,
         dt: float,
-        sdf_func,
+        sdf_func: callable,
         control_bounds: tuple = (-1.0, 1.0),
+        use_slack: bool = False,
+        slack_penalty: float = 10000,
     ):
         self.dynamics = dynamics
         self.geometry = geometry
@@ -24,6 +26,8 @@ class RunBenchmark:
         self.dt = dt
         self.sdf_func = sdf_func
         self.control_bounds = control_bounds
+        self.use_slack = use_slack
+        self.slack_penalty = slack_penalty
 
     def run(self):
         opti = ca.Opti()
@@ -42,16 +46,28 @@ class RunBenchmark:
             opti.subject_to(X[:, k + 1] == x_next)
 
         # Obstacle avoidance
+        if self.use_slack:
+            slack = opti.variable(1, self.N + 1)
+            opti.subject_to(slack >= 0)
+        else:
+            slack = None
+
         for k in range(self.N + 1):
             pose_k = X[:, k]
-            self.geometry.sdf_constraints(opti, pose_k, self.sdf_func, margin=0.05)
+            self.geometry.sdf_constraints(
+                opti, pose_k, self.sdf_func, margin=0.0, slack=slack[:, k] if slack is not None else None
+            )
 
         # Cost: minimize distance to goal
-        cost = 0
+        goal_cost = 0
         for k in range(self.N + 1):
-            cost += self.geometry.goal_cost(X[:, k], self.x_goal)
+            goal_cost += self.geometry.goal_cost(X[:, k], self.x_goal)
 
-        opti.minimize(cost)
+        total_cost = goal_cost
+        if self.use_slack:
+            total_cost += self.slack_penalty * ca.sumsqr(slack)
+
+        opti.minimize(total_cost)
 
         # Control bounds
         umin, umax = self.control_bounds

@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import casadi as ca
+from matplotlib.axes._axes import Axes
+from matplotlib.patches import Polygon
 
 
 class GoalMode(str, Enum):
@@ -30,7 +32,9 @@ class IRobotGeometry(ABC):
         pass
 
     @abstractmethod
-    def sdf_constraints(self, opti: ca.Opti, pose: ca.MX, sdf_func: callable, margin: float) -> None:
+    def sdf_constraints(
+        self, opti: ca.Opti, pose: ca.MX, sdf_func: callable, margin: float, slack: ca.MX | None = None
+    ) -> None:
         """
         Adds symbolic obstacle avoidance constraints to the optimization problem.
 
@@ -39,6 +43,7 @@ class IRobotGeometry(ABC):
             pose (ca.MX): The symbolic robot pose [x, y, theta]
             sdf_func (Callable): A symbolic function sdf(x, y) returning signed distance
             margin (float): Minimum required clearance from obstacles
+            slack (ca.MX | None): Optional symbolic relaxation variable for soft constraints. Default: None
         """
         pass
 
@@ -56,21 +61,27 @@ class IRobotGeometry(ABC):
         """
         pass
 
-    def draw(self, ax, pose: ca.MX, **kwargs):
+    @abstractmethod
+    def draw(self, ax: Axes, pose: ca.MX) -> None:
         """Matplotlib drawing using pose (x, y, theta if available)"""
-        ax.plot(pose[0], pose[1], "bo")
+        pass
 
 
 class DotGeometry(IRobotGeometry):
     def transform(self, pose: ca.MX) -> list[tuple[ca.MX, ca.MX]]:
         return [(pose[0], pose[1])]
 
-    def sdf_constraints(self, opti: ca.Opti, pose: ca.MX, sdf_func: callable, margin: float) -> None:
+    def sdf_constraints(
+        self, opti: ca.Opti, pose: ca.MX, sdf_func: callable, margin: float, slack: ca.MX | None = None
+    ) -> None:
         x, y = pose[0], pose[1]
         opti.subject_to(sdf_func(x, y) >= margin)
 
     def goal_cost(self, pose: ca.MX, goal_vec: ca.MX) -> ca.MX:
         return ca.sumsqr(pose[0:2] - goal_vec)
+
+    def draw(self, ax: Axes, pose: ca.MX) -> None:
+        ax.plot(pose[0], pose[1], "bo")
 
 
 class PolygonGeometry(IRobotGeometry):
@@ -85,15 +96,26 @@ class PolygonGeometry(IRobotGeometry):
             for px, py in self.body_points
         ]
 
-    def sdf_constraints(self, opti: ca.Opti, pose: ca.MX, sdf_func: callable, margin: float) -> None:
-        for px, py in self.transform(pose):
-            opti.subject_to(sdf_func(px, py) >= margin)
+    def sdf_constraints(
+        self, opti: ca.Opti, pose: ca.MX, sdf_func: callable, margin: float, slack: ca.MX | None = None
+    ) -> None:
+        if slack is None:
+            for px, py in self.transform(pose):
+                opti.subject_to(sdf_func(px, py) >= margin)
+        else:
+            min_dist = ca.mmin(ca.vertcat(*[sdf_func(px, py) for px, py in self.transform(pose)]))
+            opti.subject_to(min_dist + slack >= margin)
 
     def goal_cost(self, pose: ca.MX, goal_vec: ca.MX) -> ca.MX:
-        shape_pts = self.transform(pose)
+        shape_points = self.transform(pose)
         if self.goal_mode == GoalMode.CENTER:
             return ca.sumsqr(pose[0:2] - goal_vec)
-        return ca.mmin([ca.sumsqr(ca.vertcat(px, py) - goal_vec) for px, py in shape_pts])
+        return ca.mmin([ca.sumsqr(ca.vertcat(px, py) - goal_vec) for px, py in shape_points])
+
+    def draw(self, ax: Axes, pose: ca.MX) -> None:
+        shape_points = self.transform(pose)
+        polygon = Polygon(shape_points, closed=True, edgecolor="black", facecolor="lightblue")
+        ax.add_patch(polygon)
 
 
 class RectangleGeometry(PolygonGeometry):
