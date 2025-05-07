@@ -82,6 +82,7 @@ class SolverConfig(BaseModel):
     N: int = Field(default=20, ge=1, description="Number of steps")
     dt: float = 0.1
     use_slack: bool = False
+    slack_penalty: float | None = Field(default=1000, ge=1)
     mode: Literal["casadi"]
 
 

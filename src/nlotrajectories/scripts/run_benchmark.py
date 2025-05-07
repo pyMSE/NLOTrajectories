@@ -48,6 +48,7 @@ def main(config_path: Path):
         sdf_func=obstacles.sdf,
         control_bounds=tuple(config.body.control_bounds),
         use_slack=config.solver.use_slack,
+        slack_penalty=config.solver.slack_penalty,
     )
 
     X_opt, U_opt, _ = runner.run()

@@ -4,6 +4,8 @@ import casadi as ca
 import numpy as np
 from matplotlib.patches import Circle, Rectangle
 
+from nlotrajectories.core.utils import soft_abs, soft_max, soft_min
+
 
 class IObstacle(ABC):
     @abstractmethod
@@ -39,9 +41,9 @@ class SquareObstacle(IObstacle):
     def sdf(self, x: ca.MX, y: ca.MX) -> float:
         p = ca.vertcat(*[x, y]) - self.center
         half = self.size / 2 + self.margin
-        d = ca.fabs(p) - half
-        outside = ca.fmax(d, 0)
-        inside = ca.fmin(ca.fmax(d[0], d[1]), 0)
+        d = soft_abs(p) - half
+        outside = soft_max([d, 0])
+        inside = soft_min([soft_max([d[0], d[1]]), 0])
         return ca.norm_2(outside) + inside
 
     def draw(self, ax, **kwargs) -> None:
@@ -56,7 +58,7 @@ class MultiObstacle(IObstacle):
         self.obstacles = obstacles
 
     def sdf(self, x: ca.MX, y: ca.MX) -> float:
-        return ca.mmin(ca.vertcat(*[obs.sdf(x, y) for obs in self.obstacles]))
+        return soft_min([obs.sdf(x, y) for obs in self.obstacles])
 
     def draw(self, ax, **kwargs) -> None:
         for obs in self.obstacles:

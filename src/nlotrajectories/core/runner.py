@@ -16,7 +16,7 @@ class RunBenchmark:
         sdf_func: callable,
         control_bounds: tuple = (-1.0, 1.0),
         use_slack: bool = False,
-        slack_penalty: float = 10000,
+        slack_penalty: float = 1000,
     ):
         self.dynamics = dynamics
         self.geometry = geometry

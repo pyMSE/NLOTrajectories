@@ -2,8 +2,11 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import casadi as ca
+import numpy as np
 from matplotlib.axes._axes import Axes
 from matplotlib.patches import Polygon
+
+from nlotrajectories.core.utils import soft_min
 
 
 class GoalMode(str, Enum):
@@ -96,14 +99,38 @@ class PolygonGeometry(IRobotGeometry):
             for px, py in self.body_points
         ]
 
+    def densify_polygon(
+        self, corner_points: list[tuple[ca.MX, ca.MX]], num_points: int = 0
+    ) -> list[tuple[ca.MX, ca.MX]]:
+        """
+        Insert `num_points` evenly spaced points along each edge of the polygon.
+        """
+        dense_points = []
+
+        n = len(corner_points)
+        for i in range(n):
+            p0 = np.array(corner_points[i])
+            p1 = np.array(corner_points[(i + 1) % n])
+
+            dense_points.append(corner_points[i])
+
+            for j in range(1, num_points + 1):
+                t = j / (num_points + 1)
+                intermediate = (1 - t) * p0 + t * p1
+                dense_points.append(tuple(intermediate))
+
+        return dense_points
+
     def sdf_constraints(
         self, opti: ca.Opti, pose: ca.MX, sdf_func: callable, margin: float, slack: ca.MX | None = None
     ) -> None:
+        corner_points = self.transform(pose)
+        dense_points = self.densify_polygon(corner_points)
         if slack is None:
-            for px, py in self.transform(pose):
+            for px, py in dense_points:
                 opti.subject_to(sdf_func(px, py) >= margin)
         else:
-            min_dist = ca.mmin(ca.vertcat(*[sdf_func(px, py) for px, py in self.transform(pose)]))
+            min_dist = soft_min([sdf_func(px, py) for px, py in dense_points])
             opti.subject_to(min_dist + slack >= margin)
 
     def goal_cost(self, pose: ca.MX, goal_vec: ca.MX) -> ca.MX:
