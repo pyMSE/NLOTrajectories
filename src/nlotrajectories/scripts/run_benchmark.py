@@ -30,7 +30,7 @@ def draw_obstacle(ax, config):
     ax.add_patch(c)
 
 
-def main(config_path: Path):
+def run_benchmark(config_path: Path):
     config = Config(**load_config(config_path))
     obstacles = config.get_obstacles()
 
@@ -58,9 +58,13 @@ def main(config_path: Path):
     print("Final state:", X_opt[:, -1])
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to benchmark YAML config")
     args = parser.parse_args()
 
-    main(Path(args.config))
+    run_benchmark(Path(args.config))
+
+
+if __name__ == "__main__":
+    main()

@@ -38,3 +38,9 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
 python_classes = "*Test Test*"
+
+[tool.poetry]
+packages = [{ include = "nlotrajectories", from = "src" }]
+
+[tool.poetry.scripts]
+run-benchmark = "nlotrajectories.scripts.run_benchmark:main"
