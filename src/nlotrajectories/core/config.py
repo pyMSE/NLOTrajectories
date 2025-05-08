@@ -2,12 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, RootModel
 
-from nlotrajectories.core.dynamics import (
-    Dynamics,
-    PointMass1stOrder,
-    PointMass2ndOrder,
-    Unicycle,
-)
+from nlotrajectories.core.dynamics import DYNAMICS_CLASS_MAP, Dynamics, IRobotDynamics
 from nlotrajectories.core.geometry import (
     DotGeometry,
     GoalMode,
@@ -40,12 +35,11 @@ class BodyConfig(BaseModel):
             return RectangleGeometry(self.length, self.width, self.goal_mode)
         return TriangleGeometry(self.length, self.width, self.goal_mode)
 
-    def create_dynamics(self):
-        if self.dynamic == Dynamics.POINT_1ST:
-            return PointMass1stOrder()
-        if self.dynamic == Dynamics.POINT_2ND:
-            return PointMass2ndOrder()
-        return Unicycle()
+    def create_dynamics(self) -> IRobotDynamics:
+        cls = DYNAMICS_CLASS_MAP.get(self.dynamic)
+        if cls is None:
+            raise ValueError(f"Unknown dynamics type: {self.dynamic}")
+        return cls()
 
 
 class CircleObstacleConfig(BaseModel):

@@ -1,6 +1,6 @@
 body:
   shape: dot
-  dynamic: point_1st
+  dynamic: point_1st # point_2nd
   goal_mode: center
   start_state: [0.0, 0.0]
   goal_state: [1.0, 1.0]

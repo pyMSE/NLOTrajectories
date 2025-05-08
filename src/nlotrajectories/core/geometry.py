@@ -137,7 +137,7 @@ class PolygonGeometry(IRobotGeometry):
         shape_points = self.transform(pose)
         if self.goal_mode == GoalMode.CENTER:
             return ca.sumsqr(pose[0:2] - goal_vec)
-        return ca.mmin([ca.sumsqr(ca.vertcat(px, py) - goal_vec) for px, py in shape_points])
+        return ca.mmin(ca.vertcat(*[ca.sumsqr(ca.vertcat(px, py) - goal_vec) for px, py in shape_points]))
 
     def draw(self, ax: Axes, pose: ca.MX) -> None:
         shape_points = self.transform(pose)

@@ -68,3 +68,10 @@ class Unicycle(IRobotDynamics):
         dy = v * ca.sin(theta)
         dtheta = omega
         return ca.vertcat(dx, dy, dtheta)
+
+
+DYNAMICS_CLASS_MAP = {
+    Dynamics.POINT_1ST: PointMass1stOrder,
+    Dynamics.POINT_2ND: PointMass2ndOrder,
+    Dynamics.UNICYCLE: Unicycle,
+}
