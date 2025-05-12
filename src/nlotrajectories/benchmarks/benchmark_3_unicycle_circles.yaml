@@ -23,7 +23,7 @@ obstacles:
     margin: 0.0
 
 solver:
-  N: 100
+  N: 80
   dt: 0.04
   use_slack: true
   slack_penalty: 50

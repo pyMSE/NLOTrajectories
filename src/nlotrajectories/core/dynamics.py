@@ -35,7 +35,7 @@ class PointMass1stOrder(IRobotDynamics):
         return 2  # vx, vy
 
     def dynamics(self, x: ca.MX, u: ca.MX) -> ca.MX:
-        return ca.vertcat(u, 0, 0)  # dx/dt = u
+        return ca.vertcat(u[0], u[1], 0, 0)  # dx/dt = u
 
 
 class PointMass2ndOrder(IRobotDynamics):
