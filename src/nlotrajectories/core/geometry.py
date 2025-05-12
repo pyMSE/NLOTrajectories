@@ -81,7 +81,7 @@ class DotGeometry(IRobotGeometry):
         opti.subject_to(sdf_func(x, y) >= margin)
 
     def goal_cost(self, pose: ca.MX, goal_vec: ca.MX) -> ca.MX:
-        return ca.sumsqr(pose[0:2] - goal_vec)
+        return ca.sumsqr(pose[0:4] - goal_vec)
 
     def draw(self, ax: Axes, pose: ca.MX) -> None:
         ax.plot(pose[0], pose[1], "bo")

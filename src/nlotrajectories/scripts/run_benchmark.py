@@ -7,6 +7,7 @@ import yaml
 from nlotrajectories.core.config import Config
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.visualizer import plot_trajectory
+import numpy as np
 
 
 def load_config(path):
@@ -56,6 +57,7 @@ def run_benchmark(config_path: Path):
 
     print("Optimization complete.")
     print("Final state:", X_opt[:, -1])
+    np.save('/home/jxiao/Documents/Case_Study_Trajectory/NLOTrajectories/result/out.npy',X_opt)
 
 
 def main():

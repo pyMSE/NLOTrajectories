@@ -1,9 +1,9 @@
 body:
   shape: dot
-  dynamic: point_1st # point_2nd
+  dynamic: point_2nd # point_1st
   goal_mode: center
-  start_state: [0.0, 0.0]
-  goal_state: [1.0, 1.0]
+  start_state: [0.0, 0.0, 0.0, 0.0]
+  goal_state: [1.0, 1.0, 0.0, 0.0]
   control_bounds: [-1.0, 1.0]
 
 obstacles:
@@ -13,6 +13,6 @@ obstacles:
     margin: 0.05
 
 solver:
-  N: 20
+  N: 40
   dt: 0.1
   mode: casadi
