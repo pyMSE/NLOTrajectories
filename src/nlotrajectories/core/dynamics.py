@@ -84,7 +84,7 @@ class Unicycle2ndOrder(IRobotDynamics):
         omega = x[4]
         a = u[0]
         alpha = u[1]
-        
+
         dx = v * ca.cos(theta)
         dy = v * ca.sin(theta)
         dtheta = omega
