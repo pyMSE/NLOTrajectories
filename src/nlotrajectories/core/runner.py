@@ -36,6 +36,7 @@ class RunBenchmark:
 
         # Initial condition
         opti.subject_to(X[:, 0] == self.x0)
+        opti.subject_to(X[:, -1] == self.x_goal)  # Enforce terminal state
 
         # Dynamics constraints
         for k in range(self.N):
@@ -58,10 +59,13 @@ class RunBenchmark:
                 opti, pose_k, self.sdf_func, margin=0.0, slack=slack[:, k] if slack is not None else None
             )
 
-        # Cost: minimize distance to goal
+        # Cost: minimize path length
         goal_cost = 0
-        for k in range(self.N + 1):
-            goal_cost += self.geometry.goal_cost(X[:, k], self.x_goal)
+        epsilon = 1e-8  # small term to avoid sqrt(0)
+        for k in range(self.N):
+            dx = X[0, k + 1] - X[0, k]
+            dy = X[1, k + 1] - X[1, k]
+            goal_cost += ca.sqrt(dx**2 + dy**2 + epsilon)
 
         total_cost = goal_cost
         if self.use_slack:

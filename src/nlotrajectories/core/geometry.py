@@ -51,20 +51,6 @@ class IRobotGeometry(ABC):
         pass
 
     @abstractmethod
-    def goal_cost(self, pose: ca.MX, goal_vec: ca.MX) -> ca.MX:
-        """
-        Computes the symbolic cost for reaching the goal (can use center, any point, or full shape).
-
-        Parameters:
-            pose (ca.MX): The symbolic robot pose [x, y, theta]
-            goal_vec (ca.MX): Symbolic vector of goal position [x, y]
-
-        Returns:
-            ca.MX: A symbolic expression representing the goal-reaching cost
-        """
-        pass
-
-    @abstractmethod
     def draw(self, ax: Axes, pose: ca.MX) -> None:
         """Matplotlib drawing using pose (x, y, theta if available)"""
         pass
@@ -79,9 +65,6 @@ class DotGeometry(IRobotGeometry):
     ) -> None:
         x, y = pose[0], pose[1]
         opti.subject_to(sdf_func(x, y) >= margin)
-
-    def goal_cost(self, pose: ca.MX, goal_vec: ca.MX) -> ca.MX:
-        return ca.sumsqr(pose[0:2] - goal_vec)
 
     def draw(self, ax: Axes, pose: ca.MX) -> None:
         ax.plot(pose[0], pose[1], "bo")
@@ -132,12 +115,6 @@ class PolygonGeometry(IRobotGeometry):
         else:
             min_dist = soft_min([sdf_func(px, py) for px, py in dense_points])
             opti.subject_to(min_dist + slack >= margin)
-
-    def goal_cost(self, pose: ca.MX, goal_vec: ca.MX) -> ca.MX:
-        shape_points = self.transform(pose)
-        if self.goal_mode == GoalMode.CENTER:
-            return ca.sumsqr(pose[0:2] - goal_vec)
-        return ca.mmin(ca.vertcat(*[ca.sumsqr(ca.vertcat(px, py) - goal_vec) for px, py in shape_points]))
 
     def draw(self, ax: Axes, pose: ca.MX) -> None:
         shape_points = self.transform(pose)

@@ -29,13 +29,13 @@ class IRobotDynamics(ABC):
 
 class PointMass1stOrder(IRobotDynamics):
     def state_dim(self) -> int:
-        return 2  # x, y
+        return 4  # x, y, vx, vy
 
     def control_dim(self) -> int:
         return 2  # vx, vy
 
     def dynamics(self, x: ca.MX, u: ca.MX) -> ca.MX:
-        return u  # dx/dt = u
+        return ca.vertcat(u[0], u[1], 0, 0)  # dx/dt = u
 
 
 class PointMass2ndOrder(IRobotDynamics):
