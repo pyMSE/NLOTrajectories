@@ -52,7 +52,7 @@ def run_benchmark(config_path: Path):
     )
 
     X_opt, U_opt, _ = runner.run()
-    plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
+    plot_trajectory(str(config_path).replace(".yaml", ".png"), X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
 
     print("Optimization complete.")
     print("Final state:", X_opt[:, -1])
