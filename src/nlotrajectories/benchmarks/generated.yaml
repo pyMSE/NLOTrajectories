@@ -1,0 +1,29 @@
+body:
+  control_bounds:
+  - -1
+  - 1
+  dynamic: point_2nd
+  goal_mode: center
+  goal_state:
+  - 0.9
+  - 0.9
+  - 0
+  - 0
+  shape: dot
+  start_state:
+  - 0.3884402458225405
+  - 0.7097954807776903
+  - 0
+  - 0
+obstacles:
+- center:
+  - 0.30880186906394436
+  - 0.6051443206395672
+  id: 2c605a65-1cf8-43ea-87fd-9096b48c24ee
+  margin: 0.05
+  radius: 0.1
+  type: circle
+solver:
+  N: 40
+  dt: 0.1
+  mode: casadi
