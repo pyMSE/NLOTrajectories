@@ -4,7 +4,7 @@ import casadi as ca
 import numpy as np
 from matplotlib.patches import Circle, Rectangle
 
-from nlotrajectories.core.utils import soft_abs, soft_max, soft_min
+from nlotrajectories.core.utils import soft_min
 
 
 class IObstacle(ABC):
