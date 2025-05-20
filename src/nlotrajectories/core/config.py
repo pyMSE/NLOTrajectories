@@ -77,7 +77,7 @@ class SolverConfig(BaseModel):
     dt: float = 0.1
     use_slack: bool = False
     slack_penalty: float | None = Field(default=1000, ge=1)
-    mode: Literal["casadi"]
+    mode: Literal["casadi", "l4casadi"]
 
 
 class Config(BaseModel):

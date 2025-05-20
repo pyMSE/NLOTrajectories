@@ -14,6 +14,7 @@ This project contains benchmark tasks for trajectory optimization using CasADi a
 
 ```bash
 poetry install
+poetry run pip install l4casadi --no-build-isolation
 ```
 
 ## Running a Benchmark
