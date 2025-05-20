@@ -15,4 +15,4 @@ obstacles:
 solver:
   N: 40
   dt: 0.1
-  mode: casadi
+  mode: l4casadi

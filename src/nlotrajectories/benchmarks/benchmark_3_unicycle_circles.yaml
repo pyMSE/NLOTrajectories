@@ -27,4 +27,4 @@ solver:
   dt: 0.04
   use_slack: true
   slack_penalty: 50
-  mode: casadi  # TODO: l4casadi
+  mode: l4casadi  # TODO: l4casadi

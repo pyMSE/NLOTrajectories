@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plot_trajectory(X_opt, geometry, obstacles, title="Trajectory", goal=None):
@@ -24,3 +25,24 @@ def plot_trajectory(X_opt, geometry, obstacles, title="Trajectory", goal=None):
     ax.set_title(title)
     plt.legend()
     plt.savefig(path / f"{title}.png", bbox_inches="tight")
+    plt.close()
+
+
+def plot_levels(func, x_range=(-1, 2), y_range=(-1, 2), n_samples=500, title="sdf"):
+    path = Path("result")
+    path.mkdir(parents=True, exist_ok=True)
+    x = np.linspace(x_range[0], x_range[1], n_samples)
+    y = np.linspace(y_range[0], y_range[1], n_samples)
+    X, Y = np.meshgrid(x, y)
+    Z = func(X, Y)
+
+    # Plot contour lines at levels 0, 1, 2, ...
+    levels = [0.05, 0.1, 0.2, 0.5, 1]
+    plt.contour(X, Y, Z, levels=[0], colors="red")
+    contours = plt.contour(X, Y, Z, levels=levels, colors="black")
+    plt.clabel(contours, inline=True, fontsize=8, fmt="%1.2f")
+    plt.colorbar(label="f(x, y)")
+    plt.title(f"Levels for {title}")
+    plt.axis("equal")
+    plt.savefig(path / f"{title}_levels.png", bbox_inches="tight")
+    plt.close()
