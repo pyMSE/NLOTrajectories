@@ -22,10 +22,13 @@ def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=500):
     x = np.linspace(x_range[0], x_range[1], n_samples)
     y = np.linspace(y_range[0], y_range[1], n_samples)
     X, Y = np.meshgrid(x, y)
-    mse_value = mse(obstacles.sdf(X, Y), obstacles.approximated_sdf(X, Y))
-    iou_value = iou(obstacles.sdf(X, Y), obstacles.approximated_sdf(X, Y))
-    hausdorf_value = hausdorf(obstacles.sdf(X, Y), obstacles.approximated_sdf(X, Y))
-    chamfer_value = chamfer(obstacles.sdf(X, Y), obstacles.approximated_sdf(X, Y))
+    sdf_pred = obstacles.approximated_sdf(X, Y)
+    sdf_target = obstacles.sdf(X, Y)
+    mse_value = mse(sdf_target, sdf_pred)
+    iou_value = iou(sdf_target, sdf_pred, threshold = 0.0)
+    hausdorf_value = hausdorf(sdf_target, sdf_pred)
+    chamfer_value = chamfer(sdf_pred, sdf_target, X, Y, eps = 1e-2)
+
     return mse_value, iou_value, hausdorf_value, chamfer_value
 
 
