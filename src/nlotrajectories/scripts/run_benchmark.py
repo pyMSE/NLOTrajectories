@@ -9,7 +9,7 @@ import yaml
 from nlotrajectories.core.config import Config
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
-from nlotrajectories.core.visualizer import plot_levels, plot_trajectory, plot_control
+from nlotrajectories.core.visualizer import plot_levels, plot_trajectory, plot_control, animation_plot
 from nlotrajectories.core.metrics import mse, iou, hausdorf, chamfer
 
 
@@ -62,6 +62,7 @@ def run_benchmark(config_path: Path):
     plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
     plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
     plot_control(U_opt, config.solver.dt, title=str(config_path.stem) + "_control")
+    animation_plot(X_opt, U_opt, geometry, obstacles, title=str(config_path.stem) + "_animation", goal=config.body.goal_state)
     if config.solver.mode == "l4casadi":
         plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_nn_sdf")
     else:

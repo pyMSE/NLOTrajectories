@@ -23,8 +23,8 @@ obstacles:
     margin: 0.0
 
 solver:
-  N: 80
-  dt: 0.04
+  N: 160
+  dt: 0.02
   use_slack: true
   slack_penalty: 50
   mode: casadi  # TODO: l4casadi
