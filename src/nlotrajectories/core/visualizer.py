@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import numpy as np
 
 
@@ -46,3 +47,24 @@ def plot_levels(func, x_range=(-1, 2), y_range=(-1, 2), n_samples=500, title="sd
     plt.axis("equal")
     plt.savefig(path / f"{title}_levels.png", bbox_inches="tight")
     plt.close()
+
+def plot_control(U_opt, dt: float, title="Control Inputs"):    
+    path = Path("result")
+    path.mkdir(parents=True, exist_ok=True)
+
+    _, ax = plt.subplots()
+    N = U_opt.shape[1]
+
+    time = np.arange(N) * dt
+    for i in range(U_opt.shape[0]):
+        ax.plot(time, U_opt[i, :], label=f"Control {i + 1}")
+
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Control Input")
+    ax.set_title(title)
+    ax.grid(True)
+    plt.legend()
+    plt.savefig(path / f"{title}.png", bbox_inches="tight")
+    plt.close()  
+
+
