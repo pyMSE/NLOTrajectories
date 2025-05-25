@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -48,7 +48,8 @@ def plot_levels(func, x_range=(-1, 2), y_range=(-1, 2), n_samples=500, title="sd
     plt.savefig(path / f"{title}_levels.png", bbox_inches="tight")
     plt.close()
 
-def plot_control(U_opt, dt: float, title="Control Inputs"):    
+
+def plot_control(U_opt, dt: float, title="Control Inputs"):
     path = Path("result")
     path.mkdir(parents=True, exist_ok=True)
 
@@ -65,7 +66,7 @@ def plot_control(U_opt, dt: float, title="Control Inputs"):
     ax.grid(True)
     plt.legend()
     plt.savefig(path / f"{title}.png", bbox_inches="tight")
-    plt.close()  
+    plt.close()
 
 
 def animation_plot(X_opt, U_opt, geometry, obstacles, title="Trajectory Animation", goal=None):
@@ -78,17 +79,17 @@ def animation_plot(X_opt, U_opt, geometry, obstacles, title="Trajectory Animatio
 
     x_vals = X_opt[0, :]
     y_vals = X_opt[1, :]
-    
-    if X_opt.shape[0] == 2: #dot first order
+
+    if X_opt.shape[0] == 2:  # dot first order
         vx_vals = U_opt[0, :]
         vy_vals = U_opt[1, :]
-    elif X_opt.shape[0] == 3: #unicycle first order
-        vx_vals = U_opt[0, :]* np.cos(X_opt[2, :])
-        vy_vals = U_opt[0, :] * np.sin(X_opt[2, :]) 
-    elif X_opt.shape[0] == 4: #dot second order
+    elif X_opt.shape[0] == 3:  # unicycle first order
+        vx_vals = U_opt[0, :] * np.cos(X_opt[2, :])
+        vy_vals = U_opt[0, :] * np.sin(X_opt[2, :])
+    elif X_opt.shape[0] == 4:  # dot second order
         vx_vals = X_opt[2, :]
         vy_vals = X_opt[3, :]
-    elif X_opt.shape[0] == 5: #unicycle second order
+    elif X_opt.shape[0] == 5:  # unicycle second order
         vx_vals = X_opt[3, :] * np.cos(X_opt[2, :])
         vy_vals = X_opt[3, :] * np.sin(X_opt[2, :])
     else:
@@ -97,7 +98,7 @@ def animation_plot(X_opt, U_opt, geometry, obstacles, title="Trajectory Animatio
     fig, ax = plt.subplots()
     ax.set_xlim(-0.1, 1.4)
     ax.set_ylim(-0.1, 1.4)
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
     ax.set_title("2D Trajectory with Obstacles and Velocity Vectors")
     ax.set_xlabel("x")
     ax.set_ylabel("y")
@@ -111,29 +112,35 @@ def animation_plot(X_opt, U_opt, geometry, obstacles, title="Trajectory Animatio
     ax.plot(x_vals[0], y_vals[0], "ro", label="Start")
 
     # Animation Elements
-    point, = ax.plot([], [], 'bo', label='Current Position')
-    path, = ax.plot([], [], 'b--', alpha=0.5)
-    velocity_quiver = ax.quiver([], [], [], [], color='green', scale=1, label='Velocity')
-    speed_text = ax.text(0.02, 1.05, '', transform=ax.transAxes,
-                         fontsize=12, color='purple',
-                         bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray'))
+    (point,) = ax.plot([], [], "bo", label="Current Position")
+    (path,) = ax.plot([], [], "b--", alpha=0.5)
+    velocity_quiver = ax.quiver([], [], [], [], color="green", scale=1, label="Velocity")
+    speed_text = ax.text(
+        0.02,
+        1.05,
+        "",
+        transform=ax.transAxes,
+        fontsize=12,
+        color="purple",
+        bbox=dict(facecolor="white", alpha=0.8, edgecolor="gray"),
+    )
 
     # ---------- Initialize Animation Elements ----------
     def init():
         point.set_data([], [])
         path.set_data([], [])
         velocity_quiver.set_UVC([], [])
-        speed_text.set_text('')
+        speed_text.set_text("")
         return point, path, velocity_quiver, speed_text
 
     # ---------- Update Function per Frame ----------
     def update(frame):
 
         if frame < len(x_vals):
-            #pose = X_opt[:, frame]  # Current pose
-            #geometry.draw(ax, pose)  # Draw geometry at the current pose
+            # pose = X_opt[:, frame]  # Current pose
+            # geometry.draw(ax, pose)  # Draw geometry at the current pose
             point.set_data([x_vals[frame]], [y_vals[frame]])  # Update point position
-            path.set_data(x_vals[:frame+1], y_vals[:frame+1])  # Update path trace
+            path.set_data(x_vals[: frame + 1], y_vals[: frame + 1])  # Update path trace
 
             vx = vx_vals[frame]
             vy = vy_vals[frame]
@@ -145,9 +152,8 @@ def animation_plot(X_opt, U_opt, geometry, obstacles, title="Trajectory Animatio
         return point, path, velocity_quiver, speed_text
 
     # ---------- Generate and Save Animation ----------
-    ani = animation.FuncAnimation(fig, update, frames=len(x_vals),
-                                  init_func=init, blit=True, interval=100)
-    
-    ani.save(dir / f"{title}.gif", writer='pillow', fps=10)
+    ani = animation.FuncAnimation(fig, update, frames=len(x_vals), init_func=init, blit=True, interval=100)
+
+    ani.save(dir / f"{title}.gif", writer="pillow", fps=10)
     plt.show()
     plt.close()

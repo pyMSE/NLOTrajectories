@@ -2,7 +2,7 @@ import numpy as np
 
 
 def mse(target: np.array, prediction: np.array):
-    #compute the MSE metric between the target and prediction
+    # compute the MSE metric between the target and prediction
     """
     Compute the Mean Squared Error (MSE) metric.
     Args:
@@ -47,7 +47,7 @@ def hausdorf(target, prediction):
 
 
 def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, eps: float = 1e-2):
-    #compute the chamfer distance between sdf_target and sdf_pred
+    # compute the chamfer distance between sdf_target and sdf_pred
     """
     Compute the Chamfer distance between two SDF grids.
     Args:
@@ -55,24 +55,24 @@ def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, 
         sdf_pred (np.ndarray): Predicted SDF grid.
         X (np.ndarray): X coordinates of the grid.
         Y (np.ndarray): Y coordinates of the grid.
-        eps (float): value to approximate the contour (default is 1e-2).            
+        eps (float): value to approximate the contour (default is 1e-2).
     Returns:
         float: Chamfer distance between the predicted and ground truth SDFs.
     """
     if sdf_target.shape != sdf_pred.shape:
         raise ValueError("Target and prediction must have the same shape.")
 
-    #Get coordinates on the surface of each SDF
+    # Get coordinates on the surface of each SDF
     coords = np.stack([X, Y], axis=-1).reshape(-1, 2)  # shape: (n_samples², 2)
     sdf_pred_flat = sdf_pred.flatten()
-    sdf_target_flat = sdf_target.flatten()      
-    pred_points = coords[np.abs(sdf_pred_flat) < eps] #points where the predicted SDF is close to zero
-    target_points = coords[np.abs(sdf_target_flat) < eps] #points where the target SDF is close to zero
+    sdf_target_flat = sdf_target.flatten()
+    pred_points = coords[np.abs(sdf_pred_flat) < eps]  # points where the predicted SDF is close to zero
+    target_points = coords[np.abs(sdf_target_flat) < eps]  # points where the target SDF is close to zero
 
     if pred_points.shape[0] == 0 or target_points.shape[0] == 0:
-        return float('inf')  # No surface points to compare
-    
-    #Compute the chamfer distance between pred_points and target_points
+        return float("inf")  # No surface points to compare
+
+    # Compute the chamfer distance between pred_points and target_points
     dists = np.linalg.norm(pred_points[:, None] - target_points[None, :], axis=-1)
-    chamfer_distance = (np.mean(np.min(dists, axis=1)) + np.mean(np.min(dists, axis=0)))/2
+    chamfer_distance = (np.mean(np.min(dists, axis=1)) + np.mean(np.min(dists, axis=0))) / 2
     return chamfer_distance

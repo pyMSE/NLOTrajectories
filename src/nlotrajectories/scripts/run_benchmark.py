@@ -1,22 +1,27 @@
 import argparse
-import numpy as np
 from pathlib import Path
 
 import casadi as ca
 import l4casadi as l4c
+import numpy as np
 import yaml
 
 from nlotrajectories.core.config import Config
+from nlotrajectories.core.metrics import chamfer, hausdorf, iou, mse
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
-from nlotrajectories.core.visualizer import plot_levels, plot_trajectory, plot_control, animation_plot
-from nlotrajectories.core.metrics import mse, iou, hausdorf, chamfer
+from nlotrajectories.core.visualizer import (
+    animation_plot,
+    plot_control,
+    plot_levels,
+    plot_trajectory,
+)
 
 
 def load_config(path):
     with open(path, "r") as f:
         return yaml.safe_load(f)
-    
+
 
 def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=500):
     x = np.linspace(x_range[0], x_range[1], n_samples)
@@ -25,9 +30,9 @@ def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=500):
     sdf_pred = obstacles.approximated_sdf(X, Y)
     sdf_target = obstacles.sdf(X, Y)
     mse_value = mse(sdf_target, sdf_pred)
-    iou_value = iou(sdf_target, sdf_pred, threshold = 0.0)
+    iou_value = iou(sdf_target, sdf_pred, threshold=0.0)
     hausdorf_value = hausdorf(sdf_target, sdf_pred)
-    chamfer_value = chamfer(sdf_pred, sdf_target, X, Y, eps = 1e-2)
+    chamfer_value = chamfer(sdf_pred, sdf_target, X, Y, eps=1e-2)
 
     return mse_value, iou_value, hausdorf_value, chamfer_value
 
@@ -62,14 +67,16 @@ def run_benchmark(config_path: Path):
     plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
     plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
     plot_control(U_opt, config.solver.dt, title=str(config_path.stem) + "_control")
-    animation_plot(X_opt, U_opt, geometry, obstacles, title=str(config_path.stem) + "_animation", goal=config.body.goal_state)
+    animation_plot(
+        X_opt, U_opt, geometry, obstacles, title=str(config_path.stem) + "_animation", goal=config.body.goal_state
+    )
     if config.solver.mode == "l4casadi":
         plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_nn_sdf")
     else:
         plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_math_sdf")
 
     # TODO: print metrics and save .csv with the result
-    mse_value, iou_value, hausdorf_value, chamfer_value = compute_metrics(obstacles) 
+    mse_value, iou_value, hausdorf_value, chamfer_value = compute_metrics(obstacles)
     print("MSE:", mse_value)
     print("IoU:", iou_value)
     print("Hausdorf:", hausdorf_value)
