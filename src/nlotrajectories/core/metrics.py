@@ -22,8 +22,8 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
     Compute the intersection over union (IoU) metric.
 
     Args:
-        target (np.ndarray): Ground truth SDF grid.
-        prediction (np.ndarray): Predicted SDF grid.
+        sdf_target (np.ndarray): Ground truth SDF grid.
+        sdf_pred (np.ndarray): Predicted SDF grid.
         threshold (float): Threshold to determine occupancy from SDF (default is 0.0).
 
     Returns:

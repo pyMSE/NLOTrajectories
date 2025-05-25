@@ -5,6 +5,7 @@ import casadi as ca
 import l4casadi as l4c
 import numpy as np
 import yaml
+import time
 
 from nlotrajectories.core.config import Config
 from nlotrajectories.core.metrics import chamfer, hausdorf, iou, mse
@@ -23,7 +24,7 @@ def load_config(path):
         return yaml.safe_load(f)
 
 
-def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=500):
+def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=1000):
     x = np.linspace(x_range[0], x_range[1], n_samples)
     y = np.linspace(y_range[0], y_range[1], n_samples)
     X, Y = np.meshgrid(x, y)
@@ -63,17 +64,24 @@ def run_benchmark(config_path: Path):
         slack_penalty=config.solver.slack_penalty,
     )
 
-    X_opt, U_opt, _ = runner.run()
+    start_time = time.time()
+    X_opt, U_opt, opti = runner.run()
+    end_time = time.time()
+
+    objective_value = float(opti.debug.value(opti.f))
+    solver_time = end_time - start_time
+    print("Objective value:", objective_value)
+    print("Run value:", solver_time)
+
     plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
     plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
     plot_control(U_opt, config.solver.dt, title=str(config_path.stem) + "_control")
     animation_plot(
         X_opt, U_opt, geometry, obstacles, title=str(config_path.stem) + "_animation", goal=config.body.goal_state
     )
-    if config.solver.mode == "l4casadi":
-        plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_nn_sdf")
-    else:
-        plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_math_sdf")
+
+    suffix = "_nn_sdf" if config.solver.mode == "l4casadi" else "_math_sdf"
+    plot_levels(obstacles.approximated_sdf, title=f"{config_path.stem}{suffix}")
 
     # TODO: print metrics and save .csv with the result
     mse_value, iou_value, hausdorf_value, chamfer_value = compute_metrics(obstacles)
