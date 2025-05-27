@@ -82,9 +82,9 @@ class RunBenchmark:
         opti.solver("ipopt", {
             "print_time": False,
             "ipopt": {
-                "max_iter": 500,
+                "max_iter": 300,
                 "tol": 1e-6,
-                "acceptable_tol": 1e-4,
+                "acceptable_tol": 1e-2,
                 "acceptable_iter": 10,
             },
         })
