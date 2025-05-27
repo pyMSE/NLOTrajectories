@@ -8,7 +8,7 @@ import yaml
 import time
 
 from nlotrajectories.core.config import Config
-from nlotrajectories.core.metrics import chamfer, hausdorf, iou, mse
+from nlotrajectories.core.metrics import chamfer, hausdorf, iou, mse, surface_loss
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
 from nlotrajectories.core.visualizer import (
@@ -34,15 +34,16 @@ def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=1000)
     iou_value = iou(sdf_target, sdf_pred, threshold=0.0)
     hausdorf_value = hausdorf(sdf_target, sdf_pred)
     chamfer_value = chamfer(sdf_pred, sdf_target, X, Y, eps=1e-2)
+    surface_loss_value = surface_loss(sdf_target, sdf_pred, X, Y, eps=1e-2)
 
-    return mse_value, iou_value, hausdorf_value, chamfer_value
+    return mse_value, iou_value, hausdorf_value, chamfer_value, surface_loss_value
 
 
 def run_benchmark(config_path: Path):
     config = Config(**load_config(config_path))
     obstacles = config.get_obstacles()
     if config.solver.mode == "l4casadi":
-        model = l4c.naive.MultiLayerPerceptron(2, 128, 1, 2, "Tanh")
+        model = l4c.naive.MultiLayerPerceptron(2, 128, 1, 4, "ReLU")
         trainer = NNObstacleTrainer(obstacles, model)
         trainer.train((-0.5, 1.5), (-0.5, 1.5))
         obstacles = NNObstacle(obstacles, trainer.model)
@@ -71,7 +72,7 @@ def run_benchmark(config_path: Path):
     objective_value = float(opti.debug.value(opti.f))
     solver_time = end_time - start_time
     print("Objective value:", objective_value)
-    print("Run value:", solver_time)
+    print("Computation time for the solver:", solver_time)
 
     plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
     plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
@@ -84,11 +85,12 @@ def run_benchmark(config_path: Path):
     plot_levels(obstacles.approximated_sdf, title=f"{config_path.stem}{suffix}")
 
     # TODO: print metrics and save .csv with the result
-    mse_value, iou_value, hausdorf_value, chamfer_value = compute_metrics(obstacles)
+    mse_value, iou_value, hausdorf_value, chamfer_value, surface_loss_value = compute_metrics(obstacles)
     print("MSE:", mse_value)
     print("IoU:", iou_value)
     print("Hausdorf:", hausdorf_value)
     print("Chamfer:", chamfer_value)
+    print("Surface loss:", surface_loss_value)
 
     print("Optimization complete.")
     print("Final state:", X_opt[:, -1])

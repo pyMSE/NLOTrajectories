@@ -76,3 +76,28 @@ def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, 
     dists = np.linalg.norm(pred_points[:, None] - target_points[None, :], axis=-1)
     chamfer_distance = (np.mean(np.min(dists, axis=1)) + np.mean(np.min(dists, axis=0))) / 2
     return chamfer_distance
+
+def surface_loss(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, eps: float = 1e-2):
+    """
+    Compute the surface loss of the approximated sdf
+    Args:
+        sdf_target (np.ndarray): Ground truth SDF grid.
+        sdf_pred (np.ndarray): Predicted SDF grid.
+        X (np.ndarray): X coordinates of the grid.
+        Y (np.ndarray): Y coordinates of the grid.
+        eps (float): value to approximate the contour (default is 1e-2).
+    Returns:
+        float: Surface loss between the predicted and ground truth SDFs.
+    """
+    if sdf_target.shape != sdf_pred.shape:
+        raise ValueError("Target and prediction must have the same shape.")
+
+    # Get coordinates on the surface of each SDF
+    coords = np.stack([X, Y], axis=-1).reshape(-1, 2)  # shape: (n_samples², 2)
+    sdf_target_flat = sdf_target.flatten()
+
+    # Find the predicted SDF values at the target surface points
+    sdf_pred_flat = sdf_pred.flatten()
+    pred_values_surface = sdf_pred_flat[np.abs(sdf_target_flat) < eps]  # values of the predicted SDF at the target surface points
+    surface_loss_value = np.mean(pred_values_surface**2)  # Mean absolute error on the surface points
+    return surface_loss_value
