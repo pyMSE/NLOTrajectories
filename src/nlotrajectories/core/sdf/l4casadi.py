@@ -67,7 +67,7 @@ class NNObstacleTrainer:
         inputs = torch.tensor(np.stack([xs, ys], axis=1), dtype=torch.float32)
         targets = torch.tensor(sdf_vals, dtype=torch.float32).unsqueeze(1)
         return inputs, targets
-    
+
     def train(
         self,
         x_range: tuple[float, float],
@@ -75,7 +75,7 @@ class NNObstacleTrainer:
         early_stop: bool = True,
         patience: int = 10,
         min_delta: float = 1e-4,
-        surface_loss_weight: float = 1.0,
+        surface_loss_weight: float = 0,
         surface_loss_eps: float = 1e-2,
     ):
         X, Y = self.generate_data(x_range, y_range, self.n_samples, self.random)
@@ -104,14 +104,14 @@ class NNObstacleTrainer:
                 xb, yb = xb.to(self.device), yb.to(self.device)
                 pred = self.model(xb)
 
-                #Compute the MSE loss
+                # Compute the MSE loss
                 mse_loss = loss_fn(pred, yb)
 
-                #Compute the surface loss
+                # Compute the surface loss
                 if surface_loss_weight > 0:
                     surface_mask = torch.abs(yb) < surface_loss_eps
                     surface_pred = pred[surface_mask]
-                    surface_loss = torch.mean(surface_pred ** 2)
+                    surface_loss = torch.mean(surface_pred**2)
                     loss = mse_loss + surface_loss_weight * surface_loss
                 else:
                     loss = mse_loss

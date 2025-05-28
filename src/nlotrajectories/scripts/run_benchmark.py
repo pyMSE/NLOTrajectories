@@ -1,11 +1,11 @@
 import argparse
+import time
 from pathlib import Path
 
 import casadi as ca
 import l4casadi as l4c
 import numpy as np
 import yaml
-import time
 
 from nlotrajectories.core.config import Config
 from nlotrajectories.core.metrics import chamfer, hausdorff, iou, mse, surface_loss
@@ -45,7 +45,7 @@ def run_benchmark(config_path: Path):
     if config.solver.mode == "l4casadi":
         model = l4c.naive.MultiLayerPerceptron(2, 128, 1, 2, "ReLU")
         trainer = NNObstacleTrainer(obstacles, model)
-        trainer.train((-0.5, 1.5), (-0.5, 1.5), surface_loss_weight = 0.05)
+        trainer.train((-0.5, 1.5), (-0.5, 1.5), surface_loss_weight=0.2)
         obstacles = NNObstacle(obstacles, trainer.model)
 
     x0 = ca.MX(config.body.start_state)
