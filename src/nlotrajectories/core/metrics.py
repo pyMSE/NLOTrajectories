@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def mse(target: np.array, prediction: np.array):
+def mse(sdf_target: np.array, sdf_pred: np.array):
     # compute the MSE metric between the target and prediction
     """
     Compute the Mean Squared Error (MSE) metric.
@@ -11,9 +11,9 @@ def mse(target: np.array, prediction: np.array):
     Returns:
         float: MSE score between the predicted and ground truth SDFs.
     """
-    if target.shape != prediction.shape:
+    if sdf_target.shape != sdf_pred.shape:
         raise ValueError("Target and prediction must have the same shape.")
-    mse_value = np.mean((target - prediction) ** 2)
+    mse_value = np.mean((sdf_target - sdf_pred) ** 2)
     return mse_value
 
 

@@ -8,7 +8,7 @@ import yaml
 import time
 
 from nlotrajectories.core.config import Config
-from nlotrajectories.core.metrics import chamfer, hausdorf, iou, mse, surface_loss
+from nlotrajectories.core.metrics import chamfer, hausdorff, iou, mse, surface_loss
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
 from nlotrajectories.core.visualizer import (
@@ -32,20 +32,20 @@ def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=1000)
     sdf_target = obstacles.sdf(X, Y)
     mse_value = mse(sdf_target, sdf_pred)
     iou_value = iou(sdf_target, sdf_pred, threshold=0.0)
-    hausdorf_value = hausdorf(sdf_target, sdf_pred)
+    hausdorff_value = hausdorff(sdf_pred, sdf_target, X, Y, eps=1e-2)
     chamfer_value = chamfer(sdf_pred, sdf_target, X, Y, eps=1e-2)
     surface_loss_value = surface_loss(sdf_target, sdf_pred, X, Y, eps=1e-2)
 
-    return mse_value, iou_value, hausdorf_value, chamfer_value, surface_loss_value
+    return mse_value, iou_value, hausdorff_value, chamfer_value, surface_loss_value
 
 
 def run_benchmark(config_path: Path):
     config = Config(**load_config(config_path))
     obstacles = config.get_obstacles()
     if config.solver.mode == "l4casadi":
-        model = l4c.naive.MultiLayerPerceptron(2, 128, 1, 4, "ReLU")
+        model = l4c.naive.MultiLayerPerceptron(2, 128, 1, 2, "ReLU")
         trainer = NNObstacleTrainer(obstacles, model)
-        trainer.train((-0.5, 1.5), (-0.5, 1.5), surface_loss_weight = 0.2)
+        trainer.train((-0.5, 1.5), (-0.5, 1.5), surface_loss_weight = 0.05)
         obstacles = NNObstacle(obstacles, trainer.model)
 
     x0 = ca.MX(config.body.start_state)
@@ -85,10 +85,10 @@ def run_benchmark(config_path: Path):
     plot_levels(obstacles.approximated_sdf, title=f"{config_path.stem}{suffix}")
 
     # TODO: print metrics and save .csv with the result
-    mse_value, iou_value, hausdorf_value, chamfer_value, surface_loss_value = compute_metrics(obstacles)
+    mse_value, iou_value, hausdorff_value, chamfer_value, surface_loss_value = compute_metrics(obstacles)
     print("MSE:", mse_value)
     print("IoU:", iou_value)
-    print("Hausdorf:", hausdorf_value)
+    print("Hausdorff:", hausdorff_value)
     print("Chamfer:", chamfer_value)
     print("Surface loss:", surface_loss_value)
 
