@@ -41,11 +41,6 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
     iou = intersection / union
     return iou
 
-
-def hausdorf(target, prediction):
-    return 0.0
-
-
 def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, eps: float = 1e-2):
     # compute the chamfer distance between sdf_target and sdf_pred
     """
