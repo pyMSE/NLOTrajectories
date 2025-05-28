@@ -78,7 +78,16 @@ class RunBenchmark:
         opti.subject_to(opti.bounded(umin, U, umax))
 
         # Solver
-        opti.solver("ipopt")
+        # opti.solver("ipopt")
+        opti.solver(
+            "ipopt",
+            {
+                "print_time": False,
+                "ipopt": {
+                    "max_iter": 1000,
+                },
+            },
+        )
         sol = opti.solve()
 
         X_opt = sol.value(X)
