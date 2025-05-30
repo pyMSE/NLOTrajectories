@@ -41,7 +41,7 @@ def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=1000)
 
 def run_benchmark(config_path: Path):
     config = Config(**load_config(config_path))
-    obstacles = config.get_obstacles()  
+    obstacles = config.get_obstacles()
 
     if config.solver.mode == "l4casadi":
         num_hidden_layers = 2
@@ -51,7 +51,7 @@ def run_benchmark(config_path: Path):
         surface_loss_weight = 0.2
         eikonal_weight = 0
         trainer = NNObstacleTrainer(obstacles, model, eikonal_weight=eikonal_weight)
-        trainer.train((-0.5, 1.5), (-0.5, 1.5), surface_loss_weight = surface_loss_weight)
+        trainer.train((-0.5, 1.5), (-0.5, 1.5), surface_loss_weight=surface_loss_weight)
         obstacles = NNObstacle(obstacles, trainer.model)
 
     x0 = ca.MX(config.body.start_state)
@@ -110,13 +110,20 @@ def run_benchmark(config_path: Path):
     with open(results_file, "a") as f:
         # If the file doesn't exist, write the header first
         if not file_exists:
-            f.write("solver_mode, num_hidden_layers, hidden_dim, activation_function, surface_loss_weight,eikonal_weight,num_steps,objective_value,solver_time,mse,iou,hausdorff,chamfer,surface_loss\n")
-        #append neural network architecture if applicable
+            f.write(
+                "solver_mode, num_hidden_layers, hidden_dim, activation_function, surface_loss_weight,eikonal_weight,num_steps,objective_value,solver_time,mse,iou,hausdorff,chamfer,surface_loss\n"
+            )
+        # append neural network architecture if applicable
         # Append the results
         if config.solver.mode == "l4casadi":
-            f.write(f"{config.solver.mode},{num_hidden_layers},{hidden_dim},{activation_function},{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},{surface_loss_value}\n")
+            f.write(
+                f"{config.solver.mode},{num_hidden_layers},{hidden_dim},{activation_function},{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},{surface_loss_value}\n"
+            )
         else:
-            f.write(f"{config.solver.mode},None,None,None,None,None,{config.solver.N},{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},{surface_loss_value}\n")
+            f.write(
+                f"{config.solver.mode},None,None,None,None,None,{config.solver.N},{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},{surface_loss_value}\n"
+            )
+
 
 def main():
     parser = argparse.ArgumentParser()
