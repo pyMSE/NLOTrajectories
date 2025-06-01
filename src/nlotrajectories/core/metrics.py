@@ -90,7 +90,6 @@ def surface_loss(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.ar
         raise ValueError("Target and prediction must have the same shape.")
 
     # Get coordinates on the surface of each SDF
-    coords = np.stack([X, Y], axis=-1).reshape(-1, 2)  # shape: (n_samples², 2)
     sdf_target_flat = sdf_target.flatten()
 
     # Find the predicted SDF values at the target surface points
