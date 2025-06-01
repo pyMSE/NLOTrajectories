@@ -111,17 +111,23 @@ def run_benchmark(config_path: Path):
         # If the file doesn't exist, write the header first
         if not file_exists:
             f.write(
-                "solver_mode, num_hidden_layers, hidden_dim, activation_function, surface_loss_weight,eikonal_weight,num_steps,objective_value,solver_time,mse,iou,hausdorff,chamfer,surface_loss\n"
+                "solver_mode,num_hidden_layers,hidden_dim,activation_function,"
+                "surface_loss_weight,eikonal_weight,num_steps,objective_value,"
+                "solver_time,mse,iou,hausdorff,chamfer,surface_loss\n"
             )
-        # append neural network architecture if applicable
         # Append the results
         if config.solver.mode == "l4casadi":
             f.write(
-                f"{config.solver.mode},{num_hidden_layers},{hidden_dim},{activation_function},{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},{surface_loss_value}\n"
+                f"{config.solver.mode},{num_hidden_layers},{hidden_dim},{activation_function},"
+                f"{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value},"
+                f"{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},"
+                f"{surface_loss_value}\n"
             )
         else:
             f.write(
-                f"{config.solver.mode},None,None,None,None,None,{config.solver.N},{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},{surface_loss_value}\n"
+                f"{config.solver.mode},None,None,None,None,None,{config.solver.N},"
+                f"{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},"
+                f"{chamfer_value},{surface_loss_value}\n"
             )
 
 

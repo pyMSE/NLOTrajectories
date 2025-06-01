@@ -103,7 +103,6 @@ def animation_plot(X_opt, U_opt, geometry, obstacles, title="Trajectory Animatio
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.grid(True)
-    N = X_opt.shape[1]
     obstacles.draw(ax, alpha=0.7, color="r")
 
     # Draw start and goal points
