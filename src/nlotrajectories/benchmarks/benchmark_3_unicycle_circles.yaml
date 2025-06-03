@@ -1,12 +1,14 @@
 body:
   shape: rectangle
-  dynamic: unicycle
+  dynamic: unicycle_2nd
   goal_mode: center
   length: 0.2
   width: 0.1
-  start_state: [0.0, 0.0, 0.785]
-  goal_state: [1.0, 1.0, 0.785]
-  control_bounds: [-1.0, 1.0]
+  start_state: [0.0, 0.0, 0, 0.0, 0.0]
+  goal_state: [1.0, 1.0, 0.785, 0.0, 0.0]
+  control_bounds:
+    - [-2.0,  2.0]
+    - [-1.0,  1.0]
 
 obstacles:
   - type: circle
@@ -28,3 +30,13 @@ solver:
   use_slack: true
   slack_penalty: 50
   mode: l4casadi  # TODO: l4casadi
+  initializer:
+    - mode: rrt
+      rrt_bounds:
+        - [0.0, 0.0]
+        - [1.2, 1.2]
+      step_size: 0.05
+      max_iter: 1000
+      min_sdf: 0.01
+    #- mode: linear
+
