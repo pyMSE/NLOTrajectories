@@ -16,7 +16,7 @@ def load_config(path):
         return yaml.safe_load(f)
 
 
-def run_benchmark(config_path: Path):
+def run_benchmark(config_path: Path, plot=True):
     config = Config(**load_config(config_path))
     obstacles = config.get_obstacles()
     if config.solver.mode == "l4casadi":
@@ -43,16 +43,18 @@ def run_benchmark(config_path: Path):
     )
 
     X_opt, U_opt, _ = runner.run()
-    plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
-    plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
-    if config.solver.mode == "l4casadi":
-        plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_nn_sdf")
-    else:
-        plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_math_sdf")
+    if plot:
+        plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
+        plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
+        if config.solver.mode == "l4casadi":
+            plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_nn_sdf")
+        else:
+            plot_levels(obstacles.approximated_sdf, title=str(config_path.stem) + "_math_sdf")
 
     print("Optimization complete.")
     print("Final state:", X_opt[:, -1])
 
+    return X_opt
 
 def main():
     parser = argparse.ArgumentParser()
