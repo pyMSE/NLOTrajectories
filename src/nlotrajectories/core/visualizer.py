@@ -23,7 +23,7 @@ def plot_trajectory(X_opt, geometry, obstacles, X_init, title="Trajectory", goal
     ax.set_aspect("equal")
     ax.grid(True)
     ax.set_title(title)
-    plt.plot(X_init[:,0], X_init[:,1], 'r--', linewidth=1, label='Original Path')
+    plt.plot(X_init[:, 0], X_init[:, 1], "r--", linewidth=1, label="Original Path")
     plt.legend()
     plt.savefig(path / f"{title}.png", bbox_inches="tight")
     plt.close()

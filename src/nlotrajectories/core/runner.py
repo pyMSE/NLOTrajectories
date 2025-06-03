@@ -1,9 +1,8 @@
 import casadi as ca
-import numpy as np
 
 from nlotrajectories.core.dynamics import IRobotDynamics
 from nlotrajectories.core.geometry import IRobotGeometry
-from nlotrajectories.core.trajectory_initialization import *
+from nlotrajectories.core.trajectory_initialization import TrajectoryInitializer
 
 
 class RunBenchmark:
@@ -84,21 +83,10 @@ class RunBenchmark:
             umin_i, umax_i = self.control_bounds[i]
             opti.subject_to(opti.bounded(umin_i, U[i, :], umax_i))
 
-        # Initilization 
-        # Initialization via provided initializer
-        # The initializer returns a numpy array of shape (N+1, state_dim)
+        # Initilization
         X_init = self.initializer.get_initial_guess()
-        # Make sure shapes align: X_init_np is (N+1, state_dim) → transpose to (state_dim, N+1)
         opti.set_initial(X, X_init.T)
-        # Linear Initialization
-        #x0 = np.array([0.0, 0.0, 0.785, 0.1, 0.1])
-        #xf = np.array([1.0, 1.0, 0.0, 0.1, 0.1])
-        #X_init = np.linspace(x0, xf, self.N+1)
-        #opti.set_initial(X, X_init.T)
 
-        #RRT Initialization
-        #X_init = RRT_state_traj(start=[0,0], goal=[1,1], sdf_func=self.sdf_func, bounds=[[0, 0], [1.2, 1.2]], N=self.N+1,dt=self.dt)
-        #opti.set_initial(X, X_init.T)
         # Solver
         opti.solver("ipopt")
         sol = opti.solve()
@@ -107,4 +95,3 @@ class RunBenchmark:
         U_opt = sol.value(U)
 
         return X_opt, U_opt, opti, X_init
-

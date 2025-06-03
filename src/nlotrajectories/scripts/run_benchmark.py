@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
-import numpy as np
 
 import casadi as ca
 import l4casadi as l4c
+import numpy as np
 import yaml
 
 from nlotrajectories.core.config import Config
@@ -11,7 +11,12 @@ from nlotrajectories.core.runner import RunBenchmark
 
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
 from nlotrajectories.core.visualizer import plot_levels, plot_trajectory
-from nlotrajectories.core.trajectory_initialization import *
+from nlotrajectories.core.trajectory_initialization import (
+    LinearInitializer,
+    RRTInitializer,
+)
+from nlotrajectories.core.visualizer import plot_trajectory
+
 
 def load_config(path):
     with open(path, "r") as f:
@@ -33,8 +38,9 @@ def run_benchmark(config_path: Path):
 
     init_cfg = config.solver.initializer.choice
     if init_cfg.mode == "linear":
-        initializer = LinearInitializer(N = config.solver.N, x0=np.array(config.body.start_state),
-            x_goal=np.array(config.body.goal_state))
+        initializer = LinearInitializer(
+            N=config.solver.N, x0=np.array(config.body.start_state), x_goal=np.array(config.body.goal_state)
+        )
     else:
         # init_cfg.mode == "rrt"
         initializer = RRTInitializer(
@@ -60,7 +66,7 @@ def run_benchmark(config_path: Path):
         control_bounds=tuple(config.body.control_bounds),
         use_slack=config.solver.use_slack,
         slack_penalty=config.solver.slack_penalty,
-        initializer=initializer
+        initializer=initializer,
     )
 
     X_opt, U_opt, X_init = runner.run()

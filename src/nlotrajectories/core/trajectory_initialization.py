@@ -1,16 +1,19 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-import casadi as ca
+
 import numpy as np
+
 
 class Initializer(str, Enum):
     LINEAR = "linear"
     RRT = "rrt"
 
+
 class TrajectoryInitializer(ABC):
     """
     Abstract base class for trajectory initialization methods.
     """
+
     def __init__(self, x0: np.ndarray, x_goal: np.ndarray):
         self.x0 = x0
         self.x_goal = x_goal
@@ -29,6 +32,7 @@ class TrajectoryInitializer(ABC):
         """
         pass
 
+
 class LinearInitializer(TrajectoryInitializer):
     """
     Simple straight-line (linear interpolation) initializer in state space.
@@ -42,9 +46,10 @@ class LinearInitializer(TrajectoryInitializer):
         """
         self.N = N
 
-    def get_initial_guess(self ) -> np.ndarray:
+    def get_initial_guess(self) -> np.ndarray:
         return np.linspace(self.x0, self.x_goal, self.N + 1)
-    
+
+
 class RRTInitializer(TrajectoryInitializer):
     """
     RRT-based initializer that plans a collision-free path in (x,y) and lifts it to full state.
@@ -176,9 +181,7 @@ class RRTInitializer(TrajectoryInitializer):
         omega = np.diff(theta) / self.dt
         omega = np.append(omega, omega[-1])
 
-        state_traj = np.column_stack(
-            (resampled_xy[:, 0], resampled_xy[:, 1], theta, v, omega)
-        )  # shape (N, 5)
+        state_traj = np.column_stack((resampled_xy[:, 0], resampled_xy[:, 1], theta, v, omega))  # shape (N, 5)
         return state_traj
 
     def get_initial_guess(self) -> np.ndarray:
@@ -189,79 +192,6 @@ class RRTInitializer(TrajectoryInitializer):
         state_traj = self._build_rrt_path(start_xy, goal_xy)  # shape (N, 5)
         return state_traj
 
-def RRT_state_traj(start, goal, sdf_func, bounds, N=20, step_size=0.05, max_iter=1000, min_sdf=0.01, dt=0.1):
-    # Step 1: Run RRT
-    class Node:
-        def __init__(self, pos, parent=None):
-            self.pos = np.array(pos)
-            self.parent = parent
-
-    def collision(p1, p2):
-        n = 10
-        for i in range(n + 1):
-            interp = p1 + (p2 - p1) * i / n
-            if sdf_func(interp[0], interp[1]) < min_sdf:
-                return True
-        return False
-
-    def nearest(tree, rnd):
-        return min(tree, key=lambda node: np.linalg.norm(node.pos - rnd))
-
-    tree = [Node(start)]
-    for _ in range(max_iter):
-        rnd = np.random.uniform(bounds[0], bounds[1])
-        nearest_node = nearest(tree, rnd)
-        direction = rnd - nearest_node.pos
-        direction /= np.linalg.norm(direction)
-        new_pos = nearest_node.pos + step_size * direction
-        if not collision(nearest_node.pos, new_pos):
-            new_node = Node(new_pos, nearest_node)
-            tree.append(new_node)
-            if np.linalg.norm(new_pos - goal) < step_size:
-                final = Node(goal, new_node)
-                tree.append(final)
-                # Trace path
-                path = []
-                while final:
-                    path.append(final.pos)
-                    final = final.parent
-                path = path[::-1]
-                break
-    else:
-        raise RuntimeError("RRT failed")
-
-    # Step 2: Resample path
-    path = np.array(path)
-    segment_lengths = np.linalg.norm(np.diff(path, axis=0), axis=1)
-    total_length = np.sum(segment_lengths)
-    cumulative_lengths = np.insert(np.cumsum(segment_lengths), 0, 0)
-    target_lengths = np.linspace(0, total_length, N)
-
-    resampled_path = []
-    j = 0
-    for t in target_lengths:
-        while j < len(cumulative_lengths) - 2 and cumulative_lengths[j + 1] < t:
-            j += 1
-        ratio = (t - cumulative_lengths[j]) / (cumulative_lengths[j + 1] - cumulative_lengths[j])
-        point = path[j] + ratio * (path[j + 1] - path[j])
-        resampled_path.append(point)
-    resampled_path = np.array(resampled_path)
-
-    # Step 3: Build state trajectory
-    delta_xy = np.diff(resampled_path, axis=0)
-    theta = np.arctan2(delta_xy[:, 1], delta_xy[:, 0])
-    theta = np.append(theta, theta[-1])
-    theta = np.unwrap(theta)
-
-    distances = np.linalg.norm(delta_xy, axis=1)
-    v = distances / dt
-    v = np.append(v, v[-1])
-
-    omega = np.diff(theta) / dt
-    omega = np.append(omega, omega[-1])
-
-    state_traj = np.column_stack((resampled_path[:, 0], resampled_path[:, 1], theta, v, omega))
-    return state_traj
 
 INITIALIZER_CLASS_MAP = {
     Initializer.LINEAR: LinearInitializer,

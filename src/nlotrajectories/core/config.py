@@ -1,4 +1,4 @@
-from typing import Literal, List, Union
+from typing import List, Literal, Union
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -89,15 +89,18 @@ class RRTInitializerConfig(BaseModel):
         smart_union = True
         discriminator = "mode"
 
+
 class InitializerConfig(RootModel[list[Union[LinearInitializerConfig, RRTInitializerConfig]]]):
     model_config = {
         "arbitrary_types_allowed": True,
         "smart_union": True,
         "discriminator": "mode",
     }
+
     @property
     def choice(self) -> LinearInitializerConfig | RRTInitializerConfig:
         return self.root[0]
+
 
 class SolverConfig(BaseModel):
     N: int = Field(default=20, ge=1, description="Number of steps")
@@ -106,8 +109,7 @@ class SolverConfig(BaseModel):
     slack_penalty: float | None = Field(default=1000, ge=1)
     mode: Literal["casadi", "l4casadi"]
     initializer: InitializerConfig = Field(
-        default_factory=lambda: InitializerConfig(root=[{"mode": "linear"}]),
-        description="Casadi Initializer"
+        default_factory=lambda: InitializerConfig(root=[{"mode": "linear"}]), description="Casadi Initializer"
     )
 
 
