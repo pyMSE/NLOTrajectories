@@ -1,13 +1,13 @@
-import os
-import yaml
 import datetime
-import numpy as np
-import tkinter as tk
 from pathlib import Path
+import tkinter as tk
 from tkinter import messagebox
+
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Rectangle
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.patches import Circle, Rectangle
+import numpy as np
+import yaml
 
 from scripts.run_benchmark import run_benchmark
 
