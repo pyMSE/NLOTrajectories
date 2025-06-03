@@ -1,15 +1,15 @@
 import datetime
-from pathlib import Path
 import tkinter as tk
+from pathlib import Path
 from tkinter import messagebox
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.patches import Circle, Rectangle
 import numpy as np
 import yaml
-
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.patches import Circle, Rectangle
 from scripts.run_benchmark import run_benchmark
+
 
 class SimplePlannerUI:
     def __init__(self, root):
