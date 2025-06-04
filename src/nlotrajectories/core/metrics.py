@@ -1,8 +1,7 @@
 import numpy as np
 
 
-def mse(sdf_target: np.array, sdf_pred: np.array):
-    # compute the MSE metric between the target and prediction
+def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray):
     """
     Compute the Mean Squared Error (MSE) metric.
     Args:
@@ -13,8 +12,8 @@ def mse(sdf_target: np.array, sdf_pred: np.array):
     """
     if sdf_target.shape != sdf_pred.shape:
         raise ValueError("Target and prediction must have the same shape.")
-    mse_value = np.mean((sdf_target - sdf_pred) ** 2)
-    return mse_value
+    return np.mean((sdf_target - sdf_pred) ** 2)
+    
 
 
 def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
@@ -38,12 +37,10 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
     if union == 0:
         return 1.0 if intersection == 0 else 0.0
 
-    iou = intersection / union
-    return iou
+    return intersection / union
 
 
-def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, eps: float = 1e-2):
-    # compute the chamfer distance between sdf_target and sdf_pred
+def chamfer(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
     """
     Compute the Chamfer distance between two SDF grids.
     Args:
@@ -74,7 +71,7 @@ def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, 
     return chamfer_distance
 
 
-def surface_loss(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, eps: float = 1e-2):
+def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
     """
     Compute the surface loss of the approximated sdf
     Args:
