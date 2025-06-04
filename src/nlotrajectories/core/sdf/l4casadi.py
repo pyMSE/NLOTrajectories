@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-from nlotrajectories.core.sdf.casadi import IObstacle
 from nlotrajectories.core.metrics import surface_loss
+from nlotrajectories.core.sdf.casadi import IObstacle
 
 
 def sample_points(
@@ -117,7 +117,7 @@ class NNObstacleTrainer:
                         eps=surface_loss_eps,
                     )
                     surface_loss_value = torch.tensor(surface_loss_value, dtype=torch.float32, device=self.device)
-                    #if surface_loss_value is NaN because not common surface points, set it to 0.0 (no surface loss)
+                    # if surface_loss_value is NaN because not common surface points, set it to 0.0
                     if torch.isnan(surface_loss_value):
                         surface_loss_value = torch.tensor(0.0, dtype=torch.float32, device=self.device)
                     loss = mse_loss + surface_loss_weight * surface_loss_value
@@ -158,7 +158,7 @@ class NNObstacleTrainer:
                             eps=surface_loss_eps,
                         )
                         surface_loss_value = torch.tensor(surface_loss_value, dtype=torch.float32, device=self.device)
-                        #if surface_loss_value is NaN because not common surface points, set it to 0.0 (no surface loss)
+                        # if surface_loss_value is NaN because not common surface points, set it to 0.0
                         if torch.isnan(surface_loss_value):
                             surface_loss_value = torch.tensor(0.0, dtype=torch.float32, device=self.device)
                         loss = mse_loss + surface_loss_weight * surface_loss_value

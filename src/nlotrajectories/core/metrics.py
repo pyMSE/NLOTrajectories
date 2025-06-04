@@ -13,7 +13,6 @@ def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray):
     if sdf_target.shape != sdf_pred.shape:
         raise ValueError("Target and prediction must have the same shape.")
     return np.mean((sdf_target - sdf_pred) ** 2)
-    
 
 
 def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):

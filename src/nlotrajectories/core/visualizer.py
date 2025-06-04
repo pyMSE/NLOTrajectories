@@ -49,7 +49,7 @@ def plot_levels(func, x_range=(-1, 2), y_range=(-1, 2), n_samples=500, title="sd
     plt.close()
 
 
-def plot_control(U_opt, dt: float, title: str ="Control Inputs"):
+def plot_control(U_opt, dt: float, title: str = "Control Inputs"):
     path = Path("result")
     path.mkdir(parents=True, exist_ok=True)
 
