@@ -106,23 +106,20 @@ class NNObstacleTrainer:
                 pred = self.model(xb)
 
                 # Compute the MSE loss
-                mse_loss = loss_fn(pred, yb)
+                loss = loss_fn(pred, yb)
                 # Compute the surface loss
                 if surface_loss_weight > 0:
                     surface_loss_value = surface_loss(
-                        yb.detach().cpu().numpy(),
-                        pred.detach().cpu().numpy(),
-                        xb[:, 0].detach().cpu().numpy(),
-                        xb[:, 1].detach().cpu().numpy(),
+                        yb,
+                        pred,
                         eps=surface_loss_eps,
                     )
+                # Check if surface_loss_value is a NumPy float or PyTorch tensor
+                if isinstance(surface_loss_value, np.float32) or isinstance(surface_loss_value, float):
                     surface_loss_value = torch.tensor(surface_loss_value, dtype=torch.float32, device=self.device)
-                    # if surface_loss_value is NaN because not common surface points, set it to 0.0
-                    if torch.isnan(surface_loss_value):
-                        surface_loss_value = torch.tensor(0.0, dtype=torch.float32, device=self.device)
-                    loss = mse_loss + surface_loss_weight * surface_loss_value
-                else:
-                    loss = mse_loss
+                # if surface_loss_value is NaN because not common surface points, dont add it
+                if not torch.isnan(surface_loss_value):
+                    loss += surface_loss_weight * surface_loss_value
 
                 # Eikonal loss
                 if self.eikonal_weight > 0:
@@ -149,21 +146,19 @@ class NNObstacleTrainer:
                 for xb, yb in val_loader:
                     xb, yb = xb.to(self.device), yb.to(self.device)
                     pred = self.model(xb)
+                    loss = loss_fn(pred, yb)
                     if surface_loss_weight > 0:
                         surface_loss_value = surface_loss(
-                            yb.detach().cpu().numpy(),
-                            pred.detach().cpu().numpy(),
-                            xb[:, 0].detach().cpu().numpy(),
-                            xb[:, 1].detach().cpu().numpy(),
+                            yb,
+                            pred,
                             eps=surface_loss_eps,
                         )
+                    # Check if surface_loss_value is a NumPy float or PyTorch tensor
+                    if isinstance(surface_loss_value, np.float32) or isinstance(surface_loss_value, float):
                         surface_loss_value = torch.tensor(surface_loss_value, dtype=torch.float32, device=self.device)
-                        # if surface_loss_value is NaN because not common surface points, set it to 0.0
-                        if torch.isnan(surface_loss_value):
-                            surface_loss_value = torch.tensor(0.0, dtype=torch.float32, device=self.device)
-                        loss = mse_loss + surface_loss_weight * surface_loss_value
-                    else:
-                        loss = mse_loss
+                    # if surface_loss_value is NaN because not common surface points, dont add it
+                    if not torch.isnan(surface_loss_value):
+                        loss += surface_loss_weight * surface_loss_value
                     val_loss += loss.item() * xb.size(0)
                 val_loss /= len(val_loader.dataset)
                 self.model.train()
