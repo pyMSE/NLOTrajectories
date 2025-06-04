@@ -49,7 +49,7 @@ def plot_levels(func, x_range=(-1, 2), y_range=(-1, 2), n_samples=500, title="sd
     plt.close()
 
 
-def plot_control(U_opt, dt: float, title="Control Inputs"):
+def plot_control(U_opt, dt: float, title: str = "Control Inputs"):
     path = Path("result")
     path.mkdir(parents=True, exist_ok=True)
 
@@ -69,7 +69,7 @@ def plot_control(U_opt, dt: float, title="Control Inputs"):
     plt.close()
 
 
-def animation_plot(X_opt, U_opt, geometry, obstacles, title="Trajectory Animation", goal=None):
+def animation_plot(X_opt, U_opt, geometry, obstacles, title: str = "Trajectory Animation", goal=None):
     dir = Path("result")
     dir.mkdir(parents=True, exist_ok=True)
     # Ensure shapes match by slicing the longer array

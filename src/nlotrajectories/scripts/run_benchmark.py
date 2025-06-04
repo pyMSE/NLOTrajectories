@@ -49,7 +49,7 @@ def run_benchmark(config_path: Path):
         activation_function = "ReLU"
         model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, "ReLU")
         surface_loss_weight = 1
-        eikonal_weight = 0.01
+        eikonal_weight = 0
         trainer = NNObstacleTrainer(
             obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
         )
@@ -121,15 +121,15 @@ def run_benchmark(config_path: Path):
         if config.solver.mode == "l4casadi":
             f.write(
                 f"{config.solver.mode},{num_hidden_layers},{hidden_dim},{activation_function},"
-                f"{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value},"
-                f"{solver_time},{mse_value},{iou_value},{hausdorff_value},{chamfer_value},"
-                f"{surface_loss_value}\n"
+                f"{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value:3f},"
+                f"{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},{chamfer_value:6f},"
+                f"{surface_loss_value:6f}\n"
             )
         else:
             f.write(
                 f"{config.solver.mode},None,None,None,None,None,{config.solver.N},"
-                f"{objective_value},{solver_time},{mse_value},{iou_value},{hausdorff_value},"
-                f"{chamfer_value},{surface_loss_value}\n"
+                f"{objective_value:3f},{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},"
+                f"{chamfer_value:6f},{surface_loss_value:6f}\n"
             )
 
 

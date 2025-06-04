@@ -1,8 +1,7 @@
 import numpy as np
 
 
-def mse(sdf_target: np.array, sdf_pred: np.array):
-    # compute the MSE metric between the target and prediction
+def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray):
     """
     Compute the Mean Squared Error (MSE) metric.
     Args:
@@ -13,8 +12,7 @@ def mse(sdf_target: np.array, sdf_pred: np.array):
     """
     if sdf_target.shape != sdf_pred.shape:
         raise ValueError("Target and prediction must have the same shape.")
-    mse_value = np.mean((sdf_target - sdf_pred) ** 2)
-    return mse_value
+    return np.mean((sdf_target - sdf_pred) ** 2)
 
 
 def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
@@ -25,7 +23,6 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
         sdf_target (np.ndarray): Ground truth SDF grid.
         sdf_pred (np.ndarray): Predicted SDF grid.
         threshold (float): Threshold to determine occupancy from SDF (default is 0.0).
-
     Returns:
         float: IoU score between the predicted and ground truth occupancies.
     """
@@ -38,12 +35,10 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
     if union == 0:
         return 1.0 if intersection == 0 else 0.0
 
-    iou = intersection / union
-    return iou
+    return intersection / union
 
 
-def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, eps: float = 1e-2):
-    # compute the chamfer distance between sdf_target and sdf_pred
+def chamfer(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
     """
     Compute the Chamfer distance between two SDF grids.
     Args:
@@ -74,7 +69,7 @@ def chamfer(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, 
     return chamfer_distance
 
 
-def surface_loss(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.array, eps: float = 1e-2):
+def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
     """
     Compute the surface loss of the approximated sdf
     Args:
@@ -94,9 +89,11 @@ def surface_loss(sdf_target: np.array, sdf_pred: np.array, X: np.array, Y: np.ar
 
     # Find the predicted SDF values at the target surface points
     sdf_pred_flat = sdf_pred.flatten()
-    pred_values_surface = sdf_pred_flat[
-        np.abs(sdf_target_flat) < eps
-    ]  # values of the predicted SDF at the target surface points
+    pred_values_surface = sdf_pred_flat[np.abs(sdf_target_flat) < eps]
+    if pred_values_surface.size == 0:
+        return float("inf")  # Send 0 if no surface points are found
+
+    # values of the predicted SDF at the target surface points
     surface_loss_value = np.mean(pred_values_surface**2)  # Mean absolute error on the surface points
     return surface_loss_value
 
@@ -111,7 +108,6 @@ def hausdorff(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np
         X (np.ndarray): X coordinates of the grid.
         Y (np.ndarray): Y coordinates of the grid.
         eps (float): Threshold to extract surface points (default is 1e-2).
-
     Returns:
         float: Hausdorff distance between the predicted and ground truth SDFs.
     """

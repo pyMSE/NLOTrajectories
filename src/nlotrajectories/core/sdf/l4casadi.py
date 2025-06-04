@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
+from nlotrajectories.core.metrics import surface_loss
 from nlotrajectories.core.sdf.casadi import IObstacle
 
 
@@ -111,10 +112,18 @@ class NNObstacleTrainer:
 
                 # Compute the surface loss
                 if self.surface_loss_weight > 0:
-                    surface_mask = torch.abs(yb) < surface_loss_eps
-                    surface_pred = pred[surface_mask]
-                    surface_loss = torch.mean(surface_pred**2)
-                    loss = mse_loss + self.surface_loss_weight * surface_loss
+                    surface_loss_value = surface_loss(
+                        yb.detach().cpu().numpy(),
+                        pred.detach().cpu().numpy(),
+                        xb[:, 0].detach().cpu().numpy(),
+                        xb[:, 1].detach().cpu().numpy(),
+                        eps=surface_loss_eps,
+                    )
+                    surface_loss_value = torch.tensor(surface_loss_value, dtype=torch.float32, device=self.device)
+                    # if surface_loss_value is NaN because not common surface points, set it to 0.0
+                    if torch.isnan(surface_loss_value):
+                        surface_loss_value = torch.tensor(0.0, dtype=torch.float32, device=self.device)
+                    loss = mse_loss + self.surface_loss_weight * surface_loss_value
                 else:
                     loss = mse_loss
 
@@ -143,7 +152,22 @@ class NNObstacleTrainer:
                 for xb, yb in val_loader:
                     xb, yb = xb.to(self.device), yb.to(self.device)
                     pred = self.model(xb)
-                    val_loss += loss_fn(pred, yb).item() * xb.size(0)
+                    if self.surface_loss_weight > 0:
+                        surface_loss_value = surface_loss(
+                            yb.detach().cpu().numpy(),
+                            pred.detach().cpu().numpy(),
+                            xb[:, 0].detach().cpu().numpy(),
+                            xb[:, 1].detach().cpu().numpy(),
+                            eps=surface_loss_eps,
+                        )
+                        surface_loss_value = torch.tensor(surface_loss_value, dtype=torch.float32, device=self.device)
+                        # if surface_loss_value is NaN because not common surface points, set it to 0.0
+                        if torch.isnan(surface_loss_value):
+                            surface_loss_value = torch.tensor(0.0, dtype=torch.float32, device=self.device)
+                        loss = mse_loss + self.surface_loss_weight * surface_loss_value
+                    else:
+                        loss = mse_loss
+                    val_loss += loss.item() * xb.size(0)
                 val_loss /= len(val_loader.dataset)
                 self.model.train()
 
