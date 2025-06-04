@@ -34,7 +34,7 @@ def compute_metrics(obstacles, x_range=(-1, 2), y_range=(-1, 2), n_samples=1000)
     iou_value = iou(sdf_target, sdf_pred, threshold=0.0)
     hausdorff_value = hausdorff(sdf_pred, sdf_target, X, Y, eps=1e-2)
     chamfer_value = chamfer(sdf_pred, sdf_target, X, Y, eps=1e-2)
-    surface_loss_value = surface_loss(sdf_target, sdf_pred, X, Y, eps=1e-2)
+    surface_loss_value = surface_loss(sdf_target, sdf_pred, eps=1e-2)
 
     return mse_value, iou_value, hausdorff_value, chamfer_value, surface_loss_value
 

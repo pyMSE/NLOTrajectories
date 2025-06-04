@@ -69,7 +69,7 @@ def chamfer(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.n
     return chamfer_distance
 
 
-def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
+def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2):
     """
     Compute the surface loss of the approximated sdf
     Args:
@@ -81,21 +81,25 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y:
     Returns:
         float: Surface loss between the predicted and ground truth SDFs.
     """
-    if sdf_target.shape != sdf_pred.shape:
-        raise ValueError("Target and prediction must have the same shape.")
-
-    # Get coordinates on the surface of each SDF
-    sdf_target_flat = sdf_target.flatten()
-
-    # Find the predicted SDF values at the target surface points
-    sdf_pred_flat = sdf_pred.flatten()
-    pred_values_surface = sdf_pred_flat[np.abs(sdf_target_flat) < eps]
-    if pred_values_surface.size == 0:
-        return float("inf")  # Send 0 if no surface points are found
-
-    # values of the predicted SDF at the target surface points
-    surface_loss_value = np.mean(pred_values_surface**2)  # Mean absolute error on the surface points
-    return surface_loss_value
+    is_numpy = isinstance(sdf_pred, np.ndarray)
+    if is_numpy:
+        sdf_target_flat = sdf_target.flatten()
+        sdf_pred_flat = sdf_pred.flatten()
+        surface_mask = np.abs(sdf_target_flat) < eps
+        pred_values_surface = sdf_pred_flat[surface_mask]
+        if pred_values_surface.size > 0:
+            return np.mean(pred_values_surface**2)
+        else:
+            return 0.0  # or 0.0 if you prefer
+    else:
+        sdf_target_flat = sdf_target.view(-1)
+        sdf_pred_flat = sdf_pred.view(-1)
+        surface_mask = sdf_target_flat.abs() < eps
+        if surface_mask.any():
+            pred_values_surface = sdf_pred_flat[surface_mask]
+            return (pred_values_surface**2).mean()
+        else:
+            return 0.0
 
 
 def hausdorff(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
