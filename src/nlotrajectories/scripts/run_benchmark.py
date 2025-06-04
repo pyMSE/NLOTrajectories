@@ -56,6 +56,7 @@ def run_benchmark(config_path: Path, plot=True):
 
     return X_opt
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to benchmark YAML config")

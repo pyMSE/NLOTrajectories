@@ -24,7 +24,7 @@ class SimplePlannerUI:
         self.optimized_trajectory = None
 
         self.setup_controls()
-        
+
         button_frame = tk.Frame(self.root)
         button_frame.pack(side=tk.BOTTOM, pady=5)
         self.save_button = tk.Button(button_frame, text="Save Yaml", command=self.save_yaml)
@@ -142,13 +142,13 @@ class SimplePlannerUI:
     def point_in_obstacle(self, x, y):
         for ox, oy, size, otype in self.obstacles:
             if otype == "circle":
-                if (x - ox) ** 2 + (y - oy) ** 2 <= size ** 2:
+                if (x - ox) ** 2 + (y - oy) ** 2 <= size**2:
                     return True
             elif otype == "square":
                 if ox - size / 2 <= x <= ox + size / 2 and oy - size / 2 <= y <= oy + size / 2:
                     return True
         return False
-    
+
     def start_draw(self, event):
         if event.inaxes != self.ax:
             return
@@ -170,7 +170,7 @@ class SimplePlannerUI:
                 x1, y1 = self.trajectory[i + 1]
                 mid_x = (x0 + x1) / 2
                 mid_y = (y0 + y1) / 2
-                color = 'r' if self.point_in_obstacle(mid_x, mid_y) else 'k'
+                color = "r" if self.point_in_obstacle(mid_x, mid_y) else "k"
                 self.ax.plot([x0, x1], [y0, y1], color=color)
             # self.ax.plot(*self.trajectory[0], 'ko', label='Trajectory')
         self.ax.legend()
@@ -189,11 +189,7 @@ class SimplePlannerUI:
                 "control_bounds": [-1.0, 1.0],
             },
             "obstacles": [],
-            "solver": {
-                "N": 40,
-                "dt": 0.1,
-                "mode": "casadi"
-            },
+            "solver": {"N": 40, "dt": 0.1, "mode": "casadi"},
         }
 
         for x, y, size, otype in self.obstacles:
@@ -230,34 +226,34 @@ class SimplePlannerUI:
         self.ax.clear()
         self.ax.set_xlim(0, 1)
         self.ax.set_ylim(0, 1)
-        self.ax.set_aspect('equal')
+        self.ax.set_aspect("equal")
         self.ax.set_xticks(np.linspace(0, 1, 11))
         self.ax.set_yticks(np.linspace(0, 1, 11))
         self.ax.grid(True)
 
         # Redraw optimized trajectory if it exists and should be preserved
 
-        self.ax.plot(self.start[0], self.start[1], 'go', label='Start')
-        self.ax.plot(self.goal[0], self.goal[1], 'ro', label='Goal')
+        self.ax.plot(self.start[0], self.start[1], "go", label="Start")
+        self.ax.plot(self.goal[0], self.goal[1], "ro", label="Goal")
         if preserve_optimized and self.optimized_trajectory is not None:
             x_vals = self.optimized_trajectory[0, :]
             y_vals = self.optimized_trajectory[1, :]
-            self.ax.plot(x_vals, y_vals, 'b-', label='Optimized')
+            self.ax.plot(x_vals, y_vals, "b-", label="Optimized")
 
         for idx, (x, y, size, otype) in enumerate(self.obstacles):
             if otype == "circle":
-                circ = Circle((x, y), size, color='gray', alpha=0.5)
+                circ = Circle((x, y), size, color="gray", alpha=0.5)
                 self.ax.add_patch(circ)
             elif otype == "square":
-                sq = Rectangle((x - size / 2, y - size / 2), size, size, color='blue', alpha=0.5)
+                sq = Rectangle((x - size / 2, y - size / 2), size, size, color="blue", alpha=0.5)
                 self.ax.add_patch(sq)
             elif otype == "star":
-                self.ax.plot(x, y, marker=(5, 1), markersize=15 * size, color='gold')
-            self.ax.text(x, y, str(idx), fontsize=8, ha='center', va='center')
+                self.ax.plot(x, y, marker=(5, 1), markersize=15 * size, color="gold")
+            self.ax.text(x, y, str(idx), fontsize=8, ha="center", va="center")
 
         if self.trajectory:
             x_vals, y_vals = zip(*self.trajectory)
-            self.ax.plot(x_vals, y_vals, 'k-', label='Trajectory')
+            self.ax.plot(x_vals, y_vals, "k-", label="Trajectory")
 
         self.ax.legend()
         self.canvas.draw()
@@ -269,8 +265,8 @@ class SimplePlannerUI:
             cost = 0
             epsilon = 1e-8
             for i in range(len(path) - 1):
-                dx = path[i+1][0] - path[i][0]
-                dy = path[i+1][1] - path[i][1]
+                dx = path[i + 1][0] - path[i][0]
+                dy = path[i + 1][1] - path[i][1]
                 cost += np.sqrt(dx**2 + dy**2 + epsilon)
             return cost
 
@@ -282,11 +278,12 @@ class SimplePlannerUI:
 
         print(f"Hand-drawn trajectory cost: {hand_cost:.4f}")
         print(f"Optimized trajectory cost: {opt_cost:.4f}")
-    
+
     def clear_trajectories(self):
         self.trajectory = []
         self.optimized_trajectory = None
         self.update_plot(preserve_optimized=False)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
