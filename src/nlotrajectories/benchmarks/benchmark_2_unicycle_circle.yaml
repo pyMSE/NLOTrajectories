@@ -6,7 +6,7 @@ body:
   width: 0.1
   start_state: [0.0, 0.0, 0.785]
   goal_state: [1.0, 1.0,0.785]
-  control_bounds: [-1.0, 1.0]
+  control_bounds: [-2.0, 2.0]
 
 obstacles:
   # - type: circle
