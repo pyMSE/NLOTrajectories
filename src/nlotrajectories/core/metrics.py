@@ -1,7 +1,9 @@
+from typing import Union
 import numpy as np
+import torch
 
 
-def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray) -> float:
+def mse(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor]) -> float:
     """
     Compute the Mean Squared Error (MSE) metric.
     Args:
@@ -15,7 +17,7 @@ def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray) -> float:
     return np.mean((sdf_target - sdf_pred) ** 2)
 
 
-def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0) -> float:
+def iou(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], threshold: float = 0.0) -> float:
     """
     Compute the intersection over union (IoU) metric.
 
@@ -40,7 +42,7 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0) ->
 
 
 def chamfer(
-    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+    sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], X: Union[np.ndarray, torch.tensor], Y: Union[np.ndarray, torch.tensor], eps: float = 1e-2
 ) -> float | None:
     """
     Compute the Chamfer distance between two SDF grids.
@@ -72,7 +74,7 @@ def chamfer(
     return chamfer_distance
 
 
-def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2) -> float | None:
+def surface_loss(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], eps: float = 1e-2) -> float | None:
     """
     Compute the surface loss of the approximated sdf
     Args:
@@ -106,7 +108,7 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2
 
 
 def hausdorff(
-    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+    sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], X: Union[np.ndarray, torch.tensor], Y: Union[np.ndarray, torch.tensor], eps: float = 1e-2
 ) -> float | None:
     """
     Compute the Hausdorff distance between two SDF grids.
