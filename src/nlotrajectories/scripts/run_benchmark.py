@@ -44,12 +44,12 @@ def run_benchmark(config_path: Path):
     obstacles = config.get_obstacles()
 
     if config.solver.mode == "l4casadi":
-        model_cfg = config.solver.get("model", {})
-        model_type = model_cfg.get("type", "mlp").lower()
-        hidden_dim = model_cfg.get("hidden_dim", 128)
-        num_hidden_layers = model_cfg.get("num_hidden_layers", 2)
-        activation_function = model_cfg.get("activation_function", "ReLU")
-        omega_0 = model_cfg.get("omega_0", 30)
+        model_cfg = getattr(config.solver, "model", {})
+        model_type = getattr(config.solver, "model_type", "mlp")
+        hidden_dim = getattr(model_cfg, "hidden_dim", 64)
+        num_hidden_layers = getattr(model_cfg, "num_hidden_layers", 3)
+        activation_function = getattr(model_cfg, "activation_function", "ReLU")
+        omega_0 = getattr(model_cfg, "omega_0", 30)
 
         if model_type == "mlp":
             model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, activation_function)
