@@ -17,7 +17,7 @@ from nlotrajectories.core.visualizer import (
     plot_levels,
     plot_trajectory,
 )
-
+from nlotrajectories.core.nn_architectures import FourierMLP
 
 def load_config(path):
     with open(path, "r") as f:
@@ -48,6 +48,13 @@ def run_benchmark(config_path: Path):
         hidden_dim = 128
         activation_function = "ReLU"
         model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, "ReLU")
+        #model = FourierMLP(
+            #input_dim=2,
+            #hidden_dim=hidden_dim,
+            #output_dim=1,
+            #num_layers=num_hidden_layers+3,
+            #activation_function=activation_function,
+        #)
         surface_loss_weight = 1
         eikonal_weight = 0.1
         trainer = NNObstacleTrainer(
