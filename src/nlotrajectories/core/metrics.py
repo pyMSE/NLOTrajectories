@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 
-def mse(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor]) -> float:
+def mse(sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor]) -> float:
     """
     Compute the Mean Squared Error (MSE) metric.
     Args:
@@ -17,7 +17,7 @@ def mse(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray,
     return np.mean((sdf_target - sdf_pred) ** 2)
 
 
-def iou(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], threshold: float = 0.0) -> float:
+def iou(sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor], threshold: float = 0.0) -> float:
     """
     Compute the intersection over union (IoU) metric.
 
@@ -42,7 +42,7 @@ def iou(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray,
 
 
 def chamfer(
-    sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], X: Union[np.ndarray, torch.tensor], Y: Union[np.ndarray, torch.tensor], eps: float = 1e-2
+    sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor], X: Union[np.ndarray, torch.Tensor], Y: Union[np.ndarray, torch.Tensor], eps: float = 1e-2
 ) -> float | None:
     """
     Compute the Chamfer distance between two SDF grids.
@@ -74,7 +74,7 @@ def chamfer(
     return chamfer_distance
 
 
-def surface_loss(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], eps: float = 1e-2) -> float | None:
+def surface_loss(sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor], eps: float = 1e-2) -> float | None:
     """
     Compute the surface loss of the approximated sdf
     Args:
@@ -108,7 +108,7 @@ def surface_loss(sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np
 
 
 def hausdorff(
-    sdf_target: Union[np.ndarray, torch.tensor], sdf_pred: Union[np.ndarray, torch.tensor], X: Union[np.ndarray, torch.tensor], Y: Union[np.ndarray, torch.tensor], eps: float = 1e-2
+    sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor], X: Union[np.ndarray, torch.Tensor], Y: Union[np.ndarray, torch.Tensor], eps: float = 1e-2
 ) -> float | None:
     """
     Compute the Hausdorff distance between two SDF grids.
