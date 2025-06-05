@@ -39,7 +39,9 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0) ->
     return intersection / union
 
 
-def chamfer(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2) -> float | None:
+def chamfer(
+    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+) -> float | None:
     """
     Compute the Chamfer distance between two SDF grids.
     Args:
@@ -91,7 +93,7 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2
         if pred_values_surface.size > 0:
             return np.mean(pred_values_surface**2)
         else:
-            return None  
+            return None
     else:
         sdf_target_flat = sdf_target.view(-1)
         sdf_pred_flat = sdf_pred.view(-1)
@@ -103,7 +105,9 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2
             return None
 
 
-def hausdorff(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2) -> float | None:
+def hausdorff(
+    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+) -> float | None:
     """
     Compute the Hausdorff distance between two SDF grids.
 
