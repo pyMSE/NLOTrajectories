@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray):
+def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray) -> float:
     """
     Compute the Mean Squared Error (MSE) metric.
     Args:
@@ -15,7 +15,7 @@ def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray):
     return np.mean((sdf_target - sdf_pred) ** 2)
 
 
-def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
+def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0) -> float:
     """
     Compute the intersection over union (IoU) metric.
 
@@ -38,7 +38,9 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0):
     return intersection / union
 
 
-def chamfer(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
+def chamfer(
+    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+) -> float | None:
     """
     Compute the Chamfer distance between two SDF grids.
     Args:
@@ -61,7 +63,7 @@ def chamfer(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.n
     target_points = coords[np.abs(sdf_target_flat) < eps]  # points where the target SDF is close to zero
 
     if pred_points.shape[0] == 0 or target_points.shape[0] == 0:
-        return float("inf")  # No surface points to compare
+        return None  # No surface points to compare
 
     # Compute the chamfer distance between pred_points and target_points
     dists = np.linalg.norm(pred_points[:, None] - target_points[None, :], axis=-1)
@@ -69,7 +71,7 @@ def chamfer(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.n
     return chamfer_distance
 
 
-def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2):
+def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2) -> float | None:
     """
     Compute the surface loss of the approximated sdf
     Args:
@@ -90,7 +92,7 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2
         if pred_values_surface.size > 0:
             return np.mean(pred_values_surface**2)
         else:
-            return 0.0  # or 0.0 if you prefer
+            return None  # or 0.0 if you prefer
     else:
         sdf_target_flat = sdf_target.view(-1)
         sdf_pred_flat = sdf_pred.view(-1)
@@ -99,10 +101,12 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2
             pred_values_surface = sdf_pred_flat[surface_mask]
             return (pred_values_surface**2).mean()
         else:
-            return 0.0
+            return None
 
 
-def hausdorff(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2):
+def hausdorff(
+    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+) -> float | None:
     """
     Compute the Hausdorff distance between two SDF grids.
 
@@ -128,7 +132,7 @@ def hausdorff(sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np
     target_points = coords[np.abs(sdf_target_flat) < eps]
 
     if pred_points.shape[0] == 0 or target_points.shape[0] == 0:
-        return float("inf")  # Cannot compute distance without surface points
+        return None  # Cannot compute distance without surface points
 
     # Compute pairwise distances
     dists = np.linalg.norm(pred_points[:, None] - target_points[None, :], axis=-1)

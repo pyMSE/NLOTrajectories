@@ -117,11 +117,8 @@ class NNObstacleTrainer:
                         pred,
                         eps=surface_loss_eps,
                     )
-                    # Check if surface_loss_value is a NumPy float or PyTorch tensor
-                    if isinstance(surface_loss_value, np.float32) or isinstance(surface_loss_value, float):
-                        surface_loss_value = torch.tensor(surface_loss_value, dtype=torch.float32, device=self.device)
-                        # if surface_loss_value is NaN because not common surface points, set it to 0.0
-                    if not torch.isnan(surface_loss_value):
+                    # if surface_loss_value is None, dont add it
+                    if surface_loss_value is not None:
                         loss += self.surface_loss_weight * surface_loss_value
 
                 # Eikonal loss
@@ -158,13 +155,8 @@ class NNObstacleTrainer:
                             pred,
                             eps=surface_loss_eps,
                         )
-                        # Check if surface_loss_value is a NumPy float or PyTorch tensor
-                        if isinstance(surface_loss_value, np.float32) or isinstance(surface_loss_value, float):
-                            surface_loss_value = torch.tensor(
-                                surface_loss_value, dtype=torch.float32, device=self.device
-                            )
-                            # if surface_loss_value is NaN because not common surface points, set it to 0.0
-                        if not torch.isnan(surface_loss_value):
+                        # If surface_loss_vaalue is None, dont add it
+                        if surface_loss_value is not None:
                             loss += self.surface_loss_weight * surface_loss_value
                     val_loss += loss.item() * xb.size(0)
                 val_loss /= len(val_loader.dataset)

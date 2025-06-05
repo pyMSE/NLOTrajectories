@@ -49,7 +49,7 @@ def run_benchmark(config_path: Path):
         activation_function = "ReLU"
         model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, "ReLU")
         surface_loss_weight = 1
-        eikonal_weight = 0
+        eikonal_weight = 0.1
         trainer = NNObstacleTrainer(
             obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
         )
