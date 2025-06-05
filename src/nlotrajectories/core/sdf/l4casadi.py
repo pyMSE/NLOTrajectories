@@ -183,7 +183,9 @@ class NNObstacleTrainer:
 class NNObstacle(IObstacle):
     def __init__(self, obstacle: IObstacle, model: l4c.L4CasADi):
         self.obstacle = obstacle
-        self.model = model.to("cpu")
+        self.model = model
+        if type(model) is l4c.naive.MultiLayerPerceptron:
+            self.model = model.to("cpu")
 
     def sdf(self, x: ca.MX, y: ca.MX) -> float:
         return self.obstacle.sdf(x, y)

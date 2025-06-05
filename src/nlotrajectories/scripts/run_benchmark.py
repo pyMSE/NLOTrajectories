@@ -80,7 +80,11 @@ def run_benchmark(config_path: Path):
             obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
         )
         trainer.train((-0.5, 1.5), (-0.5, 1.5))
-        obstacles = NNObstacle(obstacles, trainer.model)
+        if type(model) is l4c.naive.MultiLayerPerceptron:
+            obstacles = NNObstacle(obstacles, trainer.model)
+        else:
+            model_l4c = l4c.L4CasADi(trainer.model, device="cpu")
+            obstacles = NNObstacle(obstacles, model_l4c)
 
     x0 = ca.MX(config.body.start_state)
     x_goal = ca.MX(config.body.goal_state)
