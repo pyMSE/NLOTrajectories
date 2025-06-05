@@ -45,13 +45,13 @@ def run_benchmark(config_path: Path):
     obstacles = config.get_obstacles()
 
     if config.solver.mode == "l4casadi":
-        model_cfg = getattr(config.solver, "model", {})
-        model_type = getattr(config.solver, "model_type", "mlp")
+        # model_cfg = getattr(config.solver, "model", {})
+        model_type = config.model.type
         print(f"Using model type: {model_type}")
-        hidden_dim = getattr(model_cfg, "hidden_dim", 64)
-        num_hidden_layers = getattr(model_cfg, "num_hidden_layers", 3)
-        activation_function = getattr(model_cfg, "activation_function", "ReLU")
-        omega_0 = getattr(model_cfg, "omega_0", 30)
+        hidden_dim = config.model.hidden_dim
+        num_hidden_layers = config.model.num_hidden_layers
+        activation_function = config.model.activation_function
+        omega_0 = config.model.omega_0
 
         if model_type == "mlp":
             model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, activation_function)
@@ -69,7 +69,6 @@ def run_benchmark(config_path: Path):
                 hidden_dim=hidden_dim,
                 output_dim=1,
                 num_layers=num_hidden_layers + 2,
-                activation_function="sine",  # hardcoded or ignored in SIREN
                 omega_0=omega_0,
             )
         else:

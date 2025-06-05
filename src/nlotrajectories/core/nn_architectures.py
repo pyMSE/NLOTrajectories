@@ -81,20 +81,8 @@ class SIREN(nn.Module):
         omega_0 (float): Frequency scaling factor. Default is 30.
     """
 
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=3, activation_function="ReLU", omega_0=30):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=3, omega_0=30):
         super(SIREN, self).__init__()
-
-        # Map string to activation function
-        activation_functions = {
-            "ReLU": F.relu,
-            "tanh": torch.tanh,
-            "sigmoid": torch.sigmoid,
-            "leaky_relu": F.leaky_relu,
-        }
-        if activation_function not in activation_functions:
-            raise ValueError(f"Unsupported activation function: {activation_function}")
-
-        self.activation_function = activation_functions[activation_function]
 
         self.layers = nn.ModuleList()
         self.layers.append(SineLayer(input_dim, hidden_dim, is_first=True, omega_0=omega_0))
