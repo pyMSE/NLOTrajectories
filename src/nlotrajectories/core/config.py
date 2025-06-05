@@ -113,7 +113,6 @@ class SolverConfig(BaseModel):
     )
 
 
-
 class Config(BaseModel):
     body: BodyConfig
     obstacles: ObstacleConfig

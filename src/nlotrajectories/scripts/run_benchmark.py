@@ -8,14 +8,12 @@ import yaml
 
 from nlotrajectories.core.config import Config
 from nlotrajectories.core.runner import RunBenchmark
-
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
-from nlotrajectories.core.visualizer import plot_levels, plot_trajectory
 from nlotrajectories.core.trajectory_initialization import (
     LinearInitializer,
     RRTInitializer,
 )
-from nlotrajectories.core.visualizer import plot_trajectory
+from nlotrajectories.core.visualizer import plot_levels, plot_trajectory
 
 
 def load_config(path):
