@@ -37,4 +37,11 @@ solver:
   dt: 0.04
   use_slack: true
   slack_penalty: 50
-  mode: l4casadi  # TODO: l4casadi
+  mode: l4casadi  # if l4casadi, learned sdf will be used
+  model:
+    type: siren  # options: siren, fourier, mlp
+    hidden_dim: 128
+    num_hidden_layers: 2
+    activation_function: ReLU  # ignore for siren and fourier
+    omega_0: 30                # used only for siren
+

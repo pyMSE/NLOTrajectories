@@ -17,7 +17,7 @@ from nlotrajectories.core.visualizer import (
     plot_levels,
     plot_trajectory,
 )
-from nlotrajectories.core.nn_architectures import FourierMLP
+from nlotrajectories.core.nn_architectures import FourierMLP, SIREN
 
 def load_config(path):
     with open(path, "r") as f:
@@ -44,17 +44,35 @@ def run_benchmark(config_path: Path):
     obstacles = config.get_obstacles()
 
     if config.solver.mode == "l4casadi":
-        num_hidden_layers = 2
-        hidden_dim = 128
-        activation_function = "ReLU"
-        model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, "ReLU")
-        #model = FourierMLP(
-            #input_dim=2,
-            #hidden_dim=hidden_dim,
-            #output_dim=1,
-            #num_layers=num_hidden_layers+3,
-            #activation_function=activation_function,
-        #)
+        model_cfg = config.solver.get("model", {})
+        model_type = model_cfg.get("type", "mlp").lower()
+        hidden_dim = model_cfg.get("hidden_dim", 128)
+        num_hidden_layers = model_cfg.get("num_hidden_layers", 2)
+        activation_function = model_cfg.get("activation_function", "ReLU")
+        omega_0 = model_cfg.get("omega_0", 30)
+
+        if model_type == "mlp":
+            model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, activation_function)
+        elif model_type == "fourier":
+            model = FourierMLP(
+                input_dim=2,
+                hidden_dim=hidden_dim,
+                output_dim=1,
+                num_layers=num_hidden_layers + 2,  # FourierMLP may have an embedding layer
+                activation_function=activation_function
+            )
+        elif model_type == "siren":
+            model = SIREN(
+                input_dim=2,
+                hidden_dim=hidden_dim,
+                output_dim=1,
+                num_layers=num_hidden_layers + 2,
+                activation_function="sine",  # hardcoded or ignored in SIREN
+                omega_0=omega_0
+            )
+        else:
+            raise ValueError(f"Unsupported model type: {model_type}")
+
         surface_loss_weight = 1
         eikonal_weight = 0.1
         trainer = NNObstacleTrainer(
@@ -127,11 +145,12 @@ def run_benchmark(config_path: Path):
         # Append the results
         if config.solver.mode == "l4casadi":
             f.write(
-                f"{config.solver.mode},{num_hidden_layers},{hidden_dim},{activation_function},"
-                f"{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value:3f},"
-                f"{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},{chamfer_value:6f},"
-                f"{surface_loss_value:6f}\n"
+            f"{config.solver.mode},{model_type},{num_hidden_layers},{hidden_dim},{activation_function},"
+            f"{omega_0},{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value:3f},"
+            f"{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},{chamfer_value:6f},"
+            f"{surface_loss_value:6f}\n"
             )
+
         else:
             f.write(
                 f"{config.solver.mode},None,None,None,None,None,{config.solver.N},"
