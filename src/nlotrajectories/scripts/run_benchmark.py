@@ -12,6 +12,10 @@ from nlotrajectories.core.metrics import chamfer, hausdorff, iou, mse, surface_l
 from nlotrajectories.core.nn_architectures import SIREN, FourierMLP
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
+from nlotrajectories.core.trajectory_initialization import (
+    LinearInitializer,
+    RRTInitializer,
+)
 from nlotrajectories.core.visualizer import (
     animation_plot,
     plot_control,
@@ -90,6 +94,25 @@ def run_benchmark(config_path: Path):
     x_goal = ca.MX(config.body.goal_state)
     geometry = config.body.create_geometry()
 
+    init_cfg = config.solver.initializer.choice
+    if init_cfg.mode == "linear":
+        initializer = LinearInitializer(
+            N=config.solver.N, x0=np.array(config.body.start_state), x_goal=np.array(config.body.goal_state)
+        )
+    else:
+        # init_cfg.mode == "rrt"
+        initializer = RRTInitializer(
+            N=config.solver.N + 1,
+            x0=np.array(config.body.start_state),
+            x_goal=np.array(config.body.goal_state),
+            dt=config.solver.dt,
+            sdf_func=obstacles.sdf,
+            bounds=init_cfg.rrt_bounds,
+            step_size=init_cfg.step_size,
+            max_iter=init_cfg.max_iter,
+            min_sdf=init_cfg.min_sdf,
+        )
+
     runner = RunBenchmark(
         dynamics=config.body.create_dynamics(),
         geometry=geometry,
@@ -101,18 +124,18 @@ def run_benchmark(config_path: Path):
         control_bounds=tuple(config.body.control_bounds),
         use_slack=config.solver.use_slack,
         slack_penalty=config.solver.slack_penalty,
+        initializer=initializer,
     )
 
     start_time = time.time()
-    X_opt, U_opt, opti = runner.run()
+    X_opt, U_opt, opti, X_init = runner.run()
     end_time = time.time()
 
     objective_value = float(opti.debug.value(opti.f))
     solver_time = end_time - start_time
     print("Objective value:", objective_value)
     print("Computation time for the solver:", solver_time)
-
-    plot_trajectory(X_opt, geometry, obstacles, title=config_path.stem, goal=config.body.goal_state)
+    plot_trajectory(X_opt, geometry, obstacles, X_init=X_init, title=config_path.stem, goal=config.body.goal_state)
     plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
     plot_control(U_opt, config.solver.dt, title=str(config_path.stem) + "_control")
     animation_plot(

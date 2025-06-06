@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_trajectory(X_opt, geometry, obstacles, title="Trajectory", goal=None):
+def plot_trajectory(X_opt, geometry, obstacles, X_init, title="Trajectory", goal=None):
     path = Path("result")
     path.mkdir(parents=True, exist_ok=True)
 
@@ -24,6 +24,7 @@ def plot_trajectory(X_opt, geometry, obstacles, title="Trajectory", goal=None):
     ax.set_aspect("equal")
     ax.grid(True)
     ax.set_title(title)
+    plt.plot(X_init[:, 0], X_init[:, 1], "r--", linewidth=1, label="Original Path")
     plt.legend()
     plt.savefig(path / f"{title}.png", bbox_inches="tight")
     plt.close()

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import List, Literal, Union
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -26,7 +26,7 @@ class BodyConfig(BaseModel):
     width: float | None = None
     start_state: list[float]
     goal_state: list[float]
-    control_bounds: list[float]
+    control_bounds: list[tuple[float, float]]
 
     def create_geometry(self):
         if self.shape == Shape.DOT:
@@ -72,12 +72,45 @@ class ObstacleConfig(RootModel[ObstacleConfigs]):
         return MultiObstacle([ob.to_obstacle() for ob in self.root])
 
 
+class LinearInitializerConfig(BaseModel):
+    mode: Literal["linear"] = Field("linear", description="Linear interpolation init")
+
+
+class RRTInitializerConfig(BaseModel):
+    mode: Literal["rrt"] = Field("rrt", description="RRT init")
+    rrt_bounds: List[List[float]] = Field(
+        ..., description="[[xmin, ymin], [xmax, ymax]]，for RRT random sample boundary"
+    )
+    step_size: float = Field(0.05, ge=1e-6, description="RRT step size")
+    max_iter: int = Field(1000, ge=1, description="RRT maximum iteration")
+    min_sdf: float = Field(0.01, ge=0.0, description="minimum sign distance")
+
+    class Config:
+        smart_union = True
+        discriminator = "mode"
+
+
+class InitializerConfig(RootModel[list[Union[LinearInitializerConfig, RRTInitializerConfig]]]):
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "smart_union": True,
+        "discriminator": "mode",
+    }
+
+    @property
+    def choice(self) -> LinearInitializerConfig | RRTInitializerConfig:
+        return self.root[0]
+
+
 class SolverConfig(BaseModel):
     N: int = Field(default=20, ge=1, description="Number of steps")
     dt: float = 0.1
     use_slack: bool = False
     slack_penalty: float | None = Field(default=1000, ge=1)
     mode: Literal["casadi", "l4casadi"]
+    initializer: InitializerConfig = Field(
+        default_factory=lambda: InitializerConfig(root=[{"mode": "linear"}]), description="Casadi Initializer"
+    )
 
 
 class ModelConfig(BaseModel):

@@ -4,9 +4,11 @@ body:
   goal_mode: center
   length: 0.2
   width: 0.1
-  start_state: [0.0, 0.0, 0.785, 0.0, 0.0]
+  start_state: [0.0, 0.0, 0, 0.0, 0.0]
   goal_state: [1.0, 1.0, 0.785, 0.0, 0.0]
-  control_bounds: [-2.0, 2.0]
+  control_bounds:
+    - [-2.0,  2.0]
+    - [-2.0,  2.0]
 
 obstacles:
   - type: circle
@@ -30,19 +32,27 @@ obstacles:
     size: 0.2
     margin: 0.01
 
-
-
 solver:
   N: 80
   dt: 0.04
   use_slack: true
   slack_penalty: 50
-  mode: l4casadi  # if l4casadi, learned sdf will be used
+  mode: casadi  # if l4casadi, learned sdf will be used
+  initializer:
+    - mode: rrt
+      rrt_bounds:
+        - [0.0, 0.0]
+        - [1.2, 1.2]
+      step_size: 0.05
+      max_iter: 1000
+      min_sdf: 0.01
+    #- mode: linear
 
 model:
-  type: siren  # options: siren, fourier, mlp
+  type: mlp  # options: siren, fourier, mlp
   hidden_dim: 128
   num_hidden_layers: 2
   activation_function: ReLU  # ignore for siren and fourier
   omega_0: 30                # used only for siren
+  
 
