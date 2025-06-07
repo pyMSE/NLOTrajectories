@@ -52,7 +52,7 @@ class FourierMLP(nn.Module):
         }
         if activation_function not in activation_functions:
             raise ValueError(f"Unsupported activation function: {activation_function}")
-        
+
         self.activation_function = activation_functions[activation_function]
 
         # Fourier feature layer (output is hidden_dim)
