@@ -2,6 +2,9 @@ import casadi as ca
 
 from nlotrajectories.core.dynamics import IRobotDynamics
 from nlotrajectories.core.geometry import IRobotGeometry
+from nlotrajectories.core.trajectory_initialization import (
+    TrajectoryInitializer,
+)
 
 
 class RunBenchmark:
@@ -17,6 +20,7 @@ class RunBenchmark:
         control_bounds: tuple = (-1.0, 1.0),
         use_slack: bool = False,
         slack_penalty: float = 1000,
+        initializer: TrajectoryInitializer = None,
     ):
         self.dynamics = dynamics
         self.geometry = geometry
@@ -28,6 +32,7 @@ class RunBenchmark:
         self.control_bounds = control_bounds
         self.use_slack = use_slack
         self.slack_penalty = slack_penalty
+        self.initializer = initializer
 
     def run(self):
         opti = ca.Opti()
@@ -36,7 +41,9 @@ class RunBenchmark:
 
         # Initial condition
         opti.subject_to(X[:, 0] == self.x0)
-        opti.subject_to(X[:, -1] == self.x_goal)  # Enforce terminal state
+        for i in range(X.shape[0]):
+            if i != 2:
+                opti.subject_to(X[i, -1] == self.x_goal[i])  # Enforce terminal state
 
         # Dynamics constraints
         for k in range(self.N):
@@ -74,14 +81,32 @@ class RunBenchmark:
         opti.minimize(total_cost)
 
         # Control bounds
-        umin, umax = self.control_bounds
-        opti.subject_to(opti.bounded(umin, U, umax))
+        for i in range(self.dynamics.control_dim()):
+            umin_i, umax_i = self.control_bounds[i]
+            opti.subject_to(opti.bounded(umin_i, U[i, :], umax_i))
+
+        # Initilization
+        X_init = self.initializer.get_initial_guess()
+        if X_init is not None:
+            opti.set_initial(X, X_init.T)
 
         # Solver
-        opti.solver("ipopt")
+        # opti.solver("ipopt")
+        opti.solver(
+            "ipopt",
+            {
+                "print_time": False,
+                "ipopt": {
+                    "max_iter": 1000,
+                    "mu_strategy": "adaptive",  # Default; try "monotone" if stalling
+                    "mu_oracle": "quality-function",  # Helps with choosing better barrier updates
+                    "barrier_tol_factor": 0.1,  # Makes it reduce barrier param more carefully
+                },
+            },
+        )
         sol = opti.solve()
 
         X_opt = sol.value(X)
         U_opt = sol.value(U)
 
-        return X_opt, U_opt, opti
+        return X_opt, U_opt, opti, X_init
