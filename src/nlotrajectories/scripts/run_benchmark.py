@@ -13,9 +13,9 @@ from nlotrajectories.core.nn_architectures import SIREN, FourierMLP
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
 from nlotrajectories.core.trajectory_initialization import (
+    DefualtInitializer,
     LinearInitializer,
     RRTInitializer,
-    DefualtInitializer,
 )
 from nlotrajectories.core.visualizer import (
     animation_plot,

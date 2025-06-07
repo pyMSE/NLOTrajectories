@@ -2,7 +2,9 @@ import casadi as ca
 
 from nlotrajectories.core.dynamics import IRobotDynamics
 from nlotrajectories.core.geometry import IRobotGeometry
-from nlotrajectories.core.trajectory_initialization import TrajectoryInitializer, DefualtInitializer
+from nlotrajectories.core.trajectory_initialization import (
+    TrajectoryInitializer,
+)
 
 
 class RunBenchmark:

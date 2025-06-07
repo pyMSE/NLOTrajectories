@@ -7,7 +7,7 @@ import numpy as np
 class Initializer(str, Enum):
     LINEAR = "linear"
     RRT = "rrt"
-    DEFAULT ='default'
+    DEFAULT = "default"
 
 
 class TrajectoryInitializer(ABC):
@@ -193,15 +193,18 @@ class RRTInitializer(TrajectoryInitializer):
         state_traj = self._build_rrt_path(start_xy, goal_xy)  # shape (N, 5)
         return state_traj
 
+
 class DefualtInitializer(TrajectoryInitializer):
     """
     Null initializer: returns None to skip any custom initialization.
     """
+
     def __init__(self):
         pass
 
     def get_initial_guess(self) -> None:
         return None
+
 
 INITIALIZER_CLASS_MAP = {
     Initializer.LINEAR: LinearInitializer,
