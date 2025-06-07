@@ -71,6 +71,8 @@ class ObstacleConfig(RootModel[ObstacleConfigs]):
     def to_obstacles(self) -> MultiObstacle:
         return MultiObstacle([ob.to_obstacle() for ob in self.root])
 
+class DefaultInitializerConfig(BaseModel):
+    mode: Literal["default"] = Field("default", description="Casadi default init")
 
 class LinearInitializerConfig(BaseModel):
     mode: Literal["linear"] = Field("linear", description="Linear interpolation init")
@@ -90,7 +92,7 @@ class RRTInitializerConfig(BaseModel):
         discriminator = "mode"
 
 
-class InitializerConfig(RootModel[list[Union[LinearInitializerConfig, RRTInitializerConfig]]]):
+class InitializerConfig(RootModel[list[Union[DefaultInitializerConfig, LinearInitializerConfig, RRTInitializerConfig]]]):
     model_config = {
         "arbitrary_types_allowed": True,
         "smart_union": True,

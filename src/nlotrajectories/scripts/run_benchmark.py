@@ -15,6 +15,7 @@ from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
 from nlotrajectories.core.trajectory_initialization import (
     LinearInitializer,
     RRTInitializer,
+    DefualtInitializer,
 )
 from nlotrajectories.core.visualizer import (
     animation_plot,
@@ -99,6 +100,8 @@ def run_benchmark(config_path: Path):
         initializer = LinearInitializer(
             N=config.solver.N, x0=np.array(config.body.start_state), x_goal=np.array(config.body.goal_state)
         )
+    elif init_cfg.mode == "default":
+        initializer = DefualtInitializer()
     else:
         # init_cfg.mode == "rrt"
         initializer = RRTInitializer(

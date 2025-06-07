@@ -2,7 +2,7 @@ import casadi as ca
 
 from nlotrajectories.core.dynamics import IRobotDynamics
 from nlotrajectories.core.geometry import IRobotGeometry
-from nlotrajectories.core.trajectory_initialization import TrajectoryInitializer
+from nlotrajectories.core.trajectory_initialization import TrajectoryInitializer, DefualtInitializer
 
 
 class RunBenchmark:
@@ -85,7 +85,8 @@ class RunBenchmark:
 
         # Initilization
         X_init = self.initializer.get_initial_guess()
-        opti.set_initial(X, X_init.T)
+        if X_init is not None:
+            opti.set_initial(X, X_init.T)
 
         # Solver
         # opti.solver("ipopt")
