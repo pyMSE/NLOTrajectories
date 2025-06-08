@@ -20,6 +20,7 @@ from nlotrajectories.core.trajectory_initialization import (
 from nlotrajectories.core.visualizer import (
     animation_plot,
     plot_control,
+    plot_initialization,
     plot_levels,
     plot_trajectory,
 )
@@ -111,9 +112,10 @@ def run_benchmark(config_path: Path):
             dt=config.solver.dt,
             sdf_func=obstacles.sdf,
             bounds=init_cfg.rrt_bounds,
+            geometry=geometry,
             step_size=init_cfg.step_size,
             max_iter=init_cfg.max_iter,
-            min_sdf=init_cfg.min_sdf,
+            margin=init_cfg.margin,
         )
 
     runner = RunBenchmark(
@@ -127,7 +129,10 @@ def run_benchmark(config_path: Path):
         control_bounds=tuple(config.body.control_bounds),
         use_slack=config.solver.use_slack,
         slack_penalty=config.solver.slack_penalty,
+        use_smooth=config.solver.use_smooth,
+        smooth_weight=config.solver.smooth_weight,
         initializer=initializer,
+        enforce_heading=config.solver.enforce_heading,
     )
 
     start_time = time.time()
@@ -141,6 +146,8 @@ def run_benchmark(config_path: Path):
     plot_trajectory(X_opt, geometry, obstacles, X_init=X_init, title=config_path.stem, goal=config.body.goal_state)
     plot_levels(obstacles.sdf, title=str(config_path.stem) + "_sdf")
     plot_control(U_opt, config.solver.dt, title=str(config_path.stem) + "_control")
+    if isinstance(initializer, RRTInitializer):
+        plot_initialization(initializer, X_init, obstacles, title=f"{config_path.stem}_rrt_init")
     animation_plot(
         X_opt, U_opt, geometry, obstacles, title=str(config_path.stem) + "_animation", goal=config.body.goal_state
     )

@@ -20,7 +20,10 @@ class RunBenchmark:
         control_bounds: tuple = (-1.0, 1.0),
         use_slack: bool = False,
         slack_penalty: float = 1000,
+        use_smooth: bool = False,
+        smooth_weight: float = 1000,
         initializer: TrajectoryInitializer = None,
+        enforce_heading: bool = True,
     ):
         self.dynamics = dynamics
         self.geometry = geometry
@@ -32,7 +35,10 @@ class RunBenchmark:
         self.control_bounds = control_bounds
         self.use_slack = use_slack
         self.slack_penalty = slack_penalty
+        self.use_smooth = use_smooth
+        self.smooth_weight = smooth_weight
         self.initializer = initializer
+        self.enforce_heading = enforce_heading
 
     def run(self):
         opti = ca.Opti()
@@ -40,10 +46,13 @@ class RunBenchmark:
         U = opti.variable(self.dynamics.control_dim(), self.N)
 
         # Initial condition
-        opti.subject_to(X[:, 0] == self.x0)
-        for i in range(X.shape[0]):
-            if i != 2:
-                opti.subject_to(X[i, -1] == self.x_goal[i])  # Enforce terminal state
+        opti.subject_to(X[:, 0] == self.x0)  # Enforce start state
+        if self.enforce_heading:
+            opti.subject_to(X[:, -1] == self.x_goal)
+        else:
+            for i in range(X.shape[0]):
+                if i != 2:
+                    opti.subject_to(X[i, -1] == self.x_goal[i])  # Enforce terminal state
 
         # Dynamics constraints
         for k in range(self.N):
@@ -77,6 +86,13 @@ class RunBenchmark:
         total_cost = goal_cost
         if self.use_slack:
             total_cost += self.slack_penalty * ca.sumsqr(slack)
+
+        # smooth control penalty
+        if self.use_smooth:
+            smooth_term = 0
+            for k in range(self.N - 1):
+                smooth_term += ca.sumsqr(U[:, k + 1] - U[:, k])
+            total_cost += self.smooth_weight * smooth_term
 
         opti.minimize(total_cost)
 
