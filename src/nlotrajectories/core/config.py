@@ -87,7 +87,7 @@ class RRTInitializerConfig(BaseModel):
     )
     step_size: float = Field(0.05, ge=1e-6, description="RRT step size")
     max_iter: int = Field(1000, ge=1, description="RRT maximum iteration")
-    min_sdf: float = Field(0.01, ge=0.0, description="minimum sign distance")
+    margin: float = Field(0.01, ge=0.0, description="minimum sign distance")
 
     class Config:
         smart_union = True
@@ -113,10 +113,13 @@ class SolverConfig(BaseModel):
     dt: float = 0.1
     use_slack: bool = False
     slack_penalty: float | None = Field(default=1000, ge=1)
+    use_smooth: bool = Field(False, description="Enable smoothing penalty on control rate du")
+    smooth_weight: float = Field(10.0, ge=0, description="Weight of the du smoothing penalty in the cost")
     mode: Literal["casadi", "l4casadi"]
     initializer: InitializerConfig = Field(
         default_factory=lambda: InitializerConfig(root=[{"mode": "linear"}]), description="Casadi Initializer"
     )
+    enforce_heading: bool = True
 
 
 class ModelConfig(BaseModel):
