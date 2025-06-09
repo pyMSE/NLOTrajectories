@@ -89,7 +89,7 @@ def run_benchmark(config_path: Path):
         if type(model) is l4c.naive.MultiLayerPerceptron:
             obstacles = NNObstacle(obstacles, trainer.model)
         else:
-            model_l4c = l4c.realtime.RealTimeL4CasADi(trainer.model, approximation_order=2)
+            model_l4c = l4c.L4CasADi(trainer.model, device="cpu")
             obstacles = NNObstacle(obstacles, model_l4c)
 
     x0 = ca.MX(config.body.start_state)
