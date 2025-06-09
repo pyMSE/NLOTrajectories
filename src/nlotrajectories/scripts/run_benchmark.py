@@ -80,8 +80,8 @@ def run_benchmark(config_path: Path):
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
 
-        surface_loss_weight = 1
-        eikonal_weight = 0.01
+        surface_loss_weight = config.model.surface_loss_weight
+        eikonal_weight = config.model.eikonal_loss_weight
         trainer = NNObstacleTrainer(
             obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
         )
@@ -89,7 +89,7 @@ def run_benchmark(config_path: Path):
         if type(model) is l4c.naive.MultiLayerPerceptron:
             obstacles = NNObstacle(obstacles, trainer.model)
         else:
-            model_l4c = l4c.L4CasADi(trainer.model, device="cpu")
+            model_l4c = l4c.realtime.RealTimeL4CasADi(trainer.model, approximation_order=2)
             obstacles = NNObstacle(obstacles, model_l4c)
 
     x0 = ca.MX(config.body.start_state)
@@ -178,7 +178,7 @@ def run_benchmark(config_path: Path):
             f.write(
                 "solver_mode,model_type,num_hidden_layers,hidden_dim,activation_function,"
                 "omega_0,surface_loss_weight,eikonal_weight,num_steps,objective_value,"
-                "solver_time,mse,iou,hausdorff,chamfer,surface_loss\n"
+                "solver_time,mse,iou,hausdorff,chamfer,surface_loss,enforce_heading, use_smooth, smooth_weight\n"
             )
         # Append the results
         if config.solver.mode == "l4casadi":
@@ -186,14 +186,16 @@ def run_benchmark(config_path: Path):
                 f"{config.solver.mode},{model_type},{num_hidden_layers},{hidden_dim},{activation_function},"
                 f"{omega_0},{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value:3f},"
                 f"{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},{chamfer_value:6f},"
-                f"{surface_loss_value:6f}\n"
+                f"{surface_loss_value:6f},{config.solver.enforce_heading},{config.solver.use_smooth},"
+                f"{config.solver.smooth_weight}\n"
             )
 
         else:
             f.write(
                 f"{config.solver.mode},None,None,None,None,None,None,None,{config.solver.N},"
                 f"{objective_value:3f},{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},"
-                f"{chamfer_value:6f},{surface_loss_value:6f}\n"
+                f"{chamfer_value:6f},{surface_loss_value:6f},{config.solver.enforce_heading},"
+                f"{config.solver.use_smooth},{config.solver.smooth_weight}\n"
             )
 
 

@@ -128,6 +128,8 @@ class ModelConfig(BaseModel):
     num_hidden_layers: int = Field(default=3, ge=1)
     activation_function: str = "ReLU"
     omega_0: float = 30.0  # Only used for SIREN
+    surface_loss_weight: float = Field(1.0, ge=0.0, description="Weight of the surface loss")
+    eikonal_loss_weight: float = Field(1.0, ge=0.0, description="Weight of the eikonal loss")
 
 
 class Config(BaseModel):
