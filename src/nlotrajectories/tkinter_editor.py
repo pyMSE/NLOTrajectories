@@ -12,6 +12,8 @@ from scripts.run_benchmark import run_benchmark
 
 
 class SimplePlannerUI:
+    MAX_OBSTACLES = 5
+
     def __init__(self, root):
         self.root = root
         self.root.title("2D Trajectory Planner")
@@ -42,22 +44,26 @@ class SimplePlannerUI:
 
         # Start and goal sliders
         tk.Label(frame, text="Start X").pack()
-        self.start_x = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_start)
+        self.start_x = tk.Scale(frame, from_=0, to=1, resolution=0.01,
+                                orient=tk.HORIZONTAL, command=self.update_start)
         self.start_x.set(self.start[0])
         self.start_x.pack()
 
         tk.Label(frame, text="Start Y").pack()
-        self.start_y = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_start)
+        self.start_y = tk.Scale(frame, from_=0, to=1, resolution=0.01,
+                                orient=tk.HORIZONTAL, command=self.update_start)
         self.start_y.set(self.start[1])
         self.start_y.pack()
 
         tk.Label(frame, text="Goal X").pack()
-        self.goal_x = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_goal)
+        self.goal_x = tk.Scale(frame, from_=0, to=1, resolution=0.01,
+                               orient=tk.HORIZONTAL, command=self.update_goal)
         self.goal_x.set(self.goal[0])
         self.goal_x.pack()
 
         tk.Label(frame, text="Goal Y").pack()
-        self.goal_y = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_goal)
+        self.goal_y = tk.Scale(frame, from_=0, to=1, resolution=0.01,
+                               orient=tk.HORIZONTAL, command=self.update_goal)
         self.goal_y.set(self.goal[1])
         self.goal_y.pack()
 
@@ -80,7 +86,8 @@ class SimplePlannerUI:
         tk.Label(frame, text="Type").pack()
         self.ob_type = tk.StringVar()
         self.ob_type.set("circle")
-        tk.OptionMenu(frame, self.ob_type, "circle", "square", "star").pack()
+        # Only circle and square allowed now
+        tk.OptionMenu(frame, self.ob_type, "circle", "square").pack()
 
         tk.Button(frame, text="Add Obstacle", command=self.add_obstacle).pack()
 
@@ -99,7 +106,6 @@ class SimplePlannerUI:
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         self.canvas.get_tk_widget().pack(side=tk.RIGHT)
         self.canvas.mpl_connect("button_press_event", self.start_draw)
-        self.optimized_trajectory = None
         self.canvas.mpl_connect("motion_notify_event", self.draw_path)
         self.canvas.mpl_connect("button_release_event", self.end_draw)
         self.drawing = False
@@ -114,30 +120,35 @@ class SimplePlannerUI:
         self.update_plot(preserve_optimized=True)
 
     def add_obstacle(self):
+        if len(self.obstacles) >= self.MAX_OBSTACLES:
+            messagebox.showerror(
+                "Limit reached",
+                f"Cannot add more than {self.MAX_OBSTACLES} obstacles."
+            )
+            return
+
         try:
             x = float(self.ob_x.get())
             y = float(self.ob_y.get())
             size = float(self.ob_size.get())
             otype = self.ob_type.get()
             self.obstacles.append((x, y, size, otype))
+            self.change_config = True
             self.update_plot(preserve_optimized=True)
         except ValueError:
             messagebox.showerror("Input error", "Please enter valid numbers for x, y, and size.")
-        self.change_config = True
-        self.update_plot(preserve_optimized=True)
 
     def remove_obstacle(self):
         try:
             index = int(self.remove_index.get())
             if 0 <= index < len(self.obstacles):
                 self.obstacles.pop(index)
-                self.update_plot()
+                self.change_config = True
+                self.update_plot(preserve_optimized=True)
             else:
                 messagebox.showerror("Invalid index", "Index out of range.")
         except ValueError:
             messagebox.showerror("Input error", "Please enter a valid integer index.")
-        self.change_config = True
-        self.update_plot(preserve_optimized=True)
 
     def point_in_obstacle(self, x, y):
         for ox, oy, size, otype in self.obstacles:
@@ -145,7 +156,7 @@ class SimplePlannerUI:
                 if (x - ox) ** 2 + (y - oy) ** 2 <= size**2:
                     return True
             elif otype == "square":
-                if ox - size / 2 <= x <= ox + size / 2 and oy - size / 2 <= y <= oy + size / 2:
+                if ox - size/2 <= x <= ox + size/2 and oy - size/2 <= y <= oy + size/2:
                     return True
         return False
 
@@ -153,12 +164,12 @@ class SimplePlannerUI:
         if event.inaxes != self.ax:
             return
         self.drawing = True
-        # Only begin drawing without clearing optimized result
         self.trajectory = [(event.xdata, event.ydata)]
         self.update_plot(preserve_optimized=True)
 
     def draw_path(self, event):
-        if self.drawing and event.inaxes == self.ax and event.xdata is not None and event.ydata is not None:
+        if self.drawing and event.inaxes == self.ax \
+           and event.xdata is not None and event.ydata is not None:
             self.trajectory.append((event.xdata, event.ydata))
             self.update_plot(preserve_optimized=True)
 
@@ -168,17 +179,14 @@ class SimplePlannerUI:
             for i in range(len(self.trajectory) - 1):
                 x0, y0 = self.trajectory[i]
                 x1, y1 = self.trajectory[i + 1]
-                mid_x = (x0 + x1) / 2
-                mid_y = (y0 + y1) / 2
+                mid_x, mid_y = (x0 + x1) / 2, (y0 + y1) / 2
                 color = "r" if self.point_in_obstacle(mid_x, mid_y) else "k"
                 self.ax.plot([x0, x1], [y0, y1], color=color)
-            # self.ax.plot(*self.trajectory[0], 'ko', label='Trajectory')
         self.ax.legend()
         self.canvas.draw()
 
     def save_yaml(self):
         self.change_config = False
-        # Create config dictionary
         config = {
             "body": {
                 "shape": "dot",
@@ -194,15 +202,25 @@ class SimplePlannerUI:
 
         for x, y, size, otype in self.obstacles:
             if otype == "circle":
-                config["obstacles"].append({"type": "circle", "center": [x, y], "radius": size, "margin": 0.05})
+                config["obstacles"].append({
+                    "type": "circle",
+                    "center": [x, y],
+                    "radius": size,
+                    "margin": 0.05
+                })
             elif otype == "square":
-                config["obstacles"].append({"type": "square", "center": [x, y], "size": size, "margin": 0.05})
-            elif otype == "star":
-                config["obstacles"].append({"type": "star", "center": [x, y], "size": size, "margin": 0.05})
+                config["obstacles"].append({
+                    "type": "square",
+                    "center": [x, y],
+                    "size": size,
+                    "margin": 0.05
+                })
 
         folder = Path("configs")
         folder.mkdir(exist_ok=True)
-        self.config = folder / Path(f"config_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.yaml")
+        self.config = folder / Path(
+            f"config_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.yaml"
+        )
         with open(self.config, "w") as f:
             yaml.dump(config, f, sort_keys=False, default_flow_style=None)
 
@@ -211,7 +229,6 @@ class SimplePlannerUI:
     def run_optimizer(self):
         if self.change_config:
             self.save_yaml()
-
         try:
             X_opt = run_benchmark(self.config, plot=False)
             if X_opt is not None and X_opt.shape[0] >= 2:
@@ -231,10 +248,9 @@ class SimplePlannerUI:
         self.ax.set_yticks(np.linspace(0, 1, 11))
         self.ax.grid(True)
 
-        # Redraw optimized trajectory if it exists and should be preserved
-
         self.ax.plot(self.start[0], self.start[1], "go", label="Start")
         self.ax.plot(self.goal[0], self.goal[1], "ro", label="Goal")
+
         if preserve_optimized and self.optimized_trajectory is not None:
             x_vals = self.optimized_trajectory[0, :]
             y_vals = self.optimized_trajectory[1, :]
@@ -245,10 +261,8 @@ class SimplePlannerUI:
                 circ = Circle((x, y), size, color="gray", alpha=0.5)
                 self.ax.add_patch(circ)
             elif otype == "square":
-                sq = Rectangle((x - size / 2, y - size / 2), size, size, color="blue", alpha=0.5)
+                sq = Rectangle((x - size/2, y - size/2), size, size, color="blue", alpha=0.5)
                 self.ax.add_patch(sq)
-            elif otype == "star":
-                self.ax.plot(x, y, marker=(5, 1), markersize=15 * size, color="gold")
             self.ax.text(x, y, str(idx), fontsize=8, ha="center", va="center")
 
         if self.trajectory:
@@ -263,21 +277,30 @@ class SimplePlannerUI:
             if path is None or len(path) < 2:
                 return 0
             cost = 0
-            epsilon = 1e-8
+            eps = 1e-8
             for i in range(len(path) - 1):
                 dx = path[i + 1][0] - path[i][0]
                 dy = path[i + 1][1] - path[i][1]
-                cost += np.sqrt(dx**2 + dy**2 + epsilon)
+                cost += np.sqrt(dx**2 + dy**2 + eps)
             return cost
 
         hand_cost = compute_cost(self.trajectory)
         opt_cost = 0
         if self.optimized_trajectory is not None and self.optimized_trajectory.shape[1] >= 2:
-            opt_points = list(zip(self.optimized_trajectory[0, :], self.optimized_trajectory[1, :]))
-            opt_cost = compute_cost(opt_points)
+            pts = list(zip(self.optimized_trajectory[0, :], self.optimized_trajectory[1, :]))
+            opt_cost = compute_cost(pts)
 
-        print(f"Hand-drawn trajectory cost: {hand_cost:.4f}")
-        print(f"Optimized trajectory cost: {opt_cost:.4f}")
+        # Choose title based on comparison
+        title = "You won!" if hand_cost <= opt_cost else "The optimization had lower cost"
+
+        # Build message text
+        msg = (
+            f"Hand-drawn trajectory cost: {hand_cost:.4f}\n"
+            f"Optimized trajectory cost: {opt_cost:.4f}"
+        )
+
+        # Show popup
+        messagebox.showinfo(title, msg)
 
     def clear_trajectories(self):
         self.trajectory = []
