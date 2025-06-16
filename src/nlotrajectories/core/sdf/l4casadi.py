@@ -37,6 +37,7 @@ class NNObstacleTrainer:
         device: None | str = None,
         epochs: int = 100,
         eikonal_weight: float = 0,
+        surface_loss_weight: float = 0,
         n_samples: int = 20000,
         random: bool = True,
         batch_size: int = 256,
@@ -50,6 +51,7 @@ class NNObstacleTrainer:
 
         self.epochs = epochs
         self.eikonal_weight = eikonal_weight
+        self.surface_loss_weight = surface_loss_weight
         self.n_samples = n_samples
         self.random = random
         self.batch_size = batch_size
@@ -76,7 +78,6 @@ class NNObstacleTrainer:
         early_stop: bool = True,
         patience: int = 10,
         min_delta: float = 1e-4,
-        surface_loss_weight: float = 0,
         surface_loss_eps: float = 1e-2,
     ):
         X, Y = self.generate_data(x_range, y_range, self.n_samples, self.random)
@@ -102,13 +103,14 @@ class NNObstacleTrainer:
         for ep in range(self.epochs):
             total_loss = 0
             for xb, yb in train_loader:
+                xb = xb.to(self.device).requires_grad_(self.eikonal_weight > 0)
                 xb, yb = xb.to(self.device), yb.to(self.device)
                 pred = self.model(xb)
 
                 # Compute the MSE loss
                 loss = loss_fn(pred, yb)
                 # Compute the surface loss
-                if surface_loss_weight > 0:
+                if self.surface_loss_weight > 0:
                     surface_loss_value = surface_loss(
                         yb,
                         pred,
@@ -116,7 +118,7 @@ class NNObstacleTrainer:
                     )
                     # if surface_loss_value is None because not common surface points, dont add it
                     if surface_loss_value is not None:
-                        loss += surface_loss_weight * surface_loss_value
+                        loss += self.surface_loss_weight * surface_loss_value
 
                 # Eikonal loss
                 if self.eikonal_weight > 0:
@@ -144,7 +146,7 @@ class NNObstacleTrainer:
                     xb, yb = xb.to(self.device), yb.to(self.device)
                     pred = self.model(xb)
                     loss = loss_fn(pred, yb)
-                    if surface_loss_weight > 0:
+                    if self.surface_loss_weight > 0:
                         surface_loss_value = surface_loss(
                             yb,
                             pred,
@@ -152,7 +154,7 @@ class NNObstacleTrainer:
                         )
                         # if surface_loss_value is NaN because not common surface points, dont add it
                         if surface_loss_value is not None:
-                            loss += surface_loss_weight * surface_loss_value
+                            loss += self.surface_loss_weight * surface_loss_value
                     val_loss += loss.item() * xb.size(0)
                 val_loss /= len(val_loader.dataset)
                 self.model.train()

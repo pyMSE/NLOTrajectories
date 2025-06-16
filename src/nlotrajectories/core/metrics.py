@@ -28,7 +28,6 @@ def iou(
         sdf_target (np.ndarray): Ground truth SDF grid.
         sdf_pred (np.ndarray): Predicted SDF grid.
         threshold (float): Threshold to determine occupancy from SDF (default is 0.0).
-
     Returns:
         float: IoU score between the predicted and ground truth occupancies.
     """
@@ -132,7 +131,6 @@ def hausdorff(
         X (np.ndarray): X coordinates of the grid.
         Y (np.ndarray): Y coordinates of the grid.
         eps (float): Threshold to extract surface points (default is 1e-2).
-
     Returns:
         float: Hausdorff distance between the predicted and ground truth SDFs.
     """
