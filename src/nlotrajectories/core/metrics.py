@@ -1,7 +1,10 @@
+from typing import Union
+
 import numpy as np
+import torch
 
 
-def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray) -> float:
+def mse(sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor]) -> float:
     """
     Compute the Mean Squared Error (MSE) metric.
     Args:
@@ -15,7 +18,9 @@ def mse(sdf_target: np.ndarray, sdf_pred: np.ndarray) -> float:
     return np.mean((sdf_target - sdf_pred) ** 2)
 
 
-def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0) -> float:
+def iou(
+    sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor], threshold: float = 0.0
+) -> float:
     """
     Compute the intersection over union (IoU) metric.
 
@@ -39,7 +44,11 @@ def iou(sdf_target: np.ndarray, sdf_pred: np.ndarray, threshold: float = 0.0) ->
 
 
 def chamfer(
-    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+    sdf_target: Union[np.ndarray, torch.Tensor],
+    sdf_pred: Union[np.ndarray, torch.Tensor],
+    X: Union[np.ndarray, torch.Tensor],
+    Y: Union[np.ndarray, torch.Tensor],
+    eps: float = 1e-2,
 ) -> float | None:
     """
     Compute the Chamfer distance between two SDF grids.
@@ -71,7 +80,9 @@ def chamfer(
     return chamfer_distance
 
 
-def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2) -> float | None:
+def surface_loss(
+    sdf_target: Union[np.ndarray, torch.Tensor], sdf_pred: Union[np.ndarray, torch.Tensor], eps: float = 1e-2
+) -> float | None:
     """
     Compute the surface loss of the approximated sdf
     Args:
@@ -92,7 +103,7 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2
         if pred_values_surface.size > 0:
             return np.mean(pred_values_surface**2)
         else:
-            return None  # or 0.0 if you prefer
+            return None
     else:
         sdf_target_flat = sdf_target.view(-1)
         sdf_pred_flat = sdf_pred.view(-1)
@@ -105,7 +116,11 @@ def surface_loss(sdf_target: np.ndarray, sdf_pred: np.ndarray, eps: float = 1e-2
 
 
 def hausdorff(
-    sdf_target: np.ndarray, sdf_pred: np.ndarray, X: np.ndarray, Y: np.ndarray, eps: float = 1e-2
+    sdf_target: Union[np.ndarray, torch.Tensor],
+    sdf_pred: Union[np.ndarray, torch.Tensor],
+    X: Union[np.ndarray, torch.Tensor],
+    Y: Union[np.ndarray, torch.Tensor],
+    eps: float = 1e-2,
 ) -> float | None:
     """
     Compute the Hausdorff distance between two SDF grids.

@@ -109,7 +109,6 @@ class NNObstacleTrainer:
 
                 # Compute the MSE loss
                 loss = loss_fn(pred, yb)
-
                 # Compute the surface loss
                 if self.surface_loss_weight > 0:
                     surface_loss_value = surface_loss(
@@ -117,7 +116,7 @@ class NNObstacleTrainer:
                         pred,
                         eps=surface_loss_eps,
                     )
-                    # if surface_loss_value is None, dont add it
+                    # if surface_loss_value is None because not common surface points, dont add it
                     if surface_loss_value is not None:
                         loss += self.surface_loss_weight * surface_loss_value
 
@@ -146,16 +145,14 @@ class NNObstacleTrainer:
                 for xb, yb in val_loader:
                     xb, yb = xb.to(self.device), yb.to(self.device)
                     pred = self.model(xb)
-                    # Compute the MSE loss
                     loss = loss_fn(pred, yb)
-                    # Compute the surface loss
                     if self.surface_loss_weight > 0:
                         surface_loss_value = surface_loss(
                             yb,
                             pred,
                             eps=surface_loss_eps,
                         )
-                        # If surface_loss_vaalue is None, dont add it
+                        # if surface_loss_value is NaN because not common surface points, dont add it
                         if surface_loss_value is not None:
                             loss += self.surface_loss_weight * surface_loss_value
                     val_loss += loss.item() * xb.size(0)
