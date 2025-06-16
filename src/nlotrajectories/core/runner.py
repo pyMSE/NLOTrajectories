@@ -1,4 +1,5 @@
 import casadi as ca
+import numpy as np
 
 from nlotrajectories.core.dynamics import IRobotDynamics
 from nlotrajectories.core.geometry import IRobotGeometry
@@ -84,16 +85,28 @@ class RunBenchmark:
             {
                 "print_time": False,
                 "ipopt": {
-                    "max_iter": 1000,
+                    "max_iter": 5000,
+                    "tol": 1e-2,
                     "mu_strategy": "adaptive",  # Default; try "monotone" if stalling
                     "mu_oracle": "quality-function",  # Helps with choosing better barrier updates
                     "barrier_tol_factor": 0.1,  # Makes it reduce barrier param more carefully
                 },
             },
         )
-        sol = opti.solve()
+        try:
+            sol = opti.solve()
+        except RuntimeError as e:
+            print("[IPOPT Error]", str(e))
+            print("[Diagnostic] infeasibilities:", opti.debug.value(opti.f))
+            if self.use_slack:
+                print("Slack values (mean):", np.mean(opti.debug.value(slack)))
+                print("Slack values (max):", np.max(opti.debug.value(slack)))
+            print("Dynamics violation:", np.linalg.norm(opti.debug.value(X[:, 1:] - (X[:, :-1] + self.dt * self.dynamics.dynamics(X[:, :-1], U)))) )
+            X_guess = opti.debug.value(X)
+            U_guess = opti.debug.value(U)
+            return X_guess, U_guess, opti, "failed"
 
         X_opt = sol.value(X)
         U_opt = sol.value(U)
 
-        return X_opt, U_opt, opti
+        return X_opt, U_opt, opti, "success"

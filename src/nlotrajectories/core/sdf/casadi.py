@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 
 import casadi as ca
 import numpy as np
-from matplotlib.patches import Circle, Rectangle
+from matplotlib.patches import Circle, Rectangle, Polygon as MplPolygon
+from shapely.geometry import Polygon, Point
 
 from nlotrajectories.core.utils import soft_min
 
@@ -119,6 +120,72 @@ class SquareObstacle(IObstacle):
         lower_left = self.center - half
         rect = Rectangle(lower_left, 2 * half, 2 * half, **kwargs)
         ax.add_patch(rect)
+
+
+class PolygonObstacle(IObstacle):
+    def __init__(self, points: list[tuple[float, float]], margin: float = 0.0):
+        self.points = points
+        self.polygon = Polygon(points)
+        self.margin = margin
+        self.edges = list(zip(points, points[1:] + [points[0]]))
+        self.centroid = np.mean(self.points, axis=0)
+
+    def sdf(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        if isinstance(x, ca.MX) or isinstance(x, ca.SX):
+            raise TypeError("PolygonObstacle SDF only supports NumPy arrays, not CasADi expressions.")
+
+        flat_x = x.ravel()
+        flat_y = y.ravel()
+
+        points = [Point(xi, yi) for xi, yi in zip(flat_x, flat_y)]
+
+        distances = np.array([p.distance(self.polygon.boundary) for p in points])
+        signs = np.array([-1 if self.polygon.contains(p) else 1 for p in points])
+
+        sdf_flat = distances * signs - self.margin
+        return sdf_flat.reshape(x.shape)
+
+    def approximated_sdf(self, x, y):
+        is_numpy = isinstance(x, np.ndarray)
+
+        def norm(val):
+            return np.sqrt(val) if is_numpy else ca.sqrt(val)
+
+        def maximum(a, b):
+            return np.maximum(a, b) if is_numpy else ca.fmax(a, b)
+
+        def minimum(a, b):
+            return np.minimum(a, b) if is_numpy else ca.fmin(a, b)
+
+        dists = []
+        for (x0, y0), (x1, y1) in self.edges:
+            dx = x1 - x0
+            dy = y1 - y0
+            seg_len_sq = dx**2 + dy**2 + 1e-6
+
+            px = x - x0
+            py = y - y0
+            t_raw = (px * dx + py * dy) / seg_len_sq
+            t = minimum(1.0, maximum(0.0, t_raw))
+
+            proj_x = x0 + t * dx
+            proj_y = y0 + t * dy
+
+            dist = norm((x - proj_x) ** 2 + (y - proj_y) ** 2)
+            dists.append(dist)
+
+        min_dist = soft_min(dists)
+
+        # Use precomputed centroid
+        cx, cy = self.centroid
+        direction = (x - cx) * (y - cy)
+        sign = np.tanh(100 * direction) if is_numpy else ca.tanh(100 * direction)
+
+        return sign * min_dist - self.margin
+
+    def draw(self, ax, **kwargs) -> None:
+        polygon_patch = MplPolygon(self.points, closed=True, **kwargs)
+        ax.add_patch(polygon_patch)
 
 
 class MultiObstacle(IObstacle):

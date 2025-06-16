@@ -45,11 +45,11 @@ def run_benchmark(config_path: Path):
 
     if config.solver.mode == "l4casadi":
         num_hidden_layers = 2
-        hidden_dim = 128
+        hidden_dim = 256
         activation_function = "ReLU"
-        model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, "ReLU")
-        surface_loss_weight = 1
-        eikonal_weight = 0.1
+        model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, activation_function)
+        surface_loss_weight = 0.8
+        eikonal_weight = 1
         trainer = NNObstacleTrainer(
             obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
         )
@@ -74,8 +74,14 @@ def run_benchmark(config_path: Path):
     )
 
     start_time = time.time()
-    X_opt, U_opt, opti = runner.run()
+    X_opt, U_opt, opti, status = runner.run()
     end_time = time.time()
+
+    if status == "failed":
+        suffix = "_nn_sdf" if config.solver.mode == "l4casadi" else "_math_sdf"
+        plot_levels(obstacles.approximated_sdf, title=f"{config_path.stem}{suffix}")
+        plot_trajectory(X_opt, geometry, obstacles, title=f"{config_path.stem}_guess", goal=config.body.goal_state)
+        return
 
     objective_value = float(opti.debug.value(opti.f))
     solver_time = end_time - start_time
