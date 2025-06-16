@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
+from nlotrajectories.core.metrics import surface_loss
 from nlotrajectories.core.sdf.casadi import IObstacle
 
 
@@ -75,6 +76,8 @@ class NNObstacleTrainer:
         early_stop: bool = True,
         patience: int = 10,
         min_delta: float = 1e-4,
+        surface_loss_weight: float = 0,
+        surface_loss_eps: float = 1e-2,
     ):
         X, Y = self.generate_data(x_range, y_range, self.n_samples, self.random)
 
@@ -101,7 +104,19 @@ class NNObstacleTrainer:
             for xb, yb in train_loader:
                 xb, yb = xb.to(self.device), yb.to(self.device)
                 pred = self.model(xb)
+
+                # Compute the MSE loss
                 loss = loss_fn(pred, yb)
+                # Compute the surface loss
+                if surface_loss_weight > 0:
+                    surface_loss_value = surface_loss(
+                        yb,
+                        pred,
+                        eps=surface_loss_eps,
+                    )
+                    # if surface_loss_value is None because not common surface points, dont add it
+                    if surface_loss_value is not None:
+                        loss += surface_loss_weight * surface_loss_value
 
                 # Eikonal loss
                 if self.eikonal_weight > 0:
@@ -128,7 +143,17 @@ class NNObstacleTrainer:
                 for xb, yb in val_loader:
                     xb, yb = xb.to(self.device), yb.to(self.device)
                     pred = self.model(xb)
-                    val_loss += loss_fn(pred, yb).item() * xb.size(0)
+                    loss = loss_fn(pred, yb)
+                    if surface_loss_weight > 0:
+                        surface_loss_value = surface_loss(
+                            yb,
+                            pred,
+                            eps=surface_loss_eps,
+                        )
+                        # if surface_loss_value is NaN because not common surface points, dont add it
+                        if surface_loss_value is not None:
+                            loss += surface_loss_weight * surface_loss_value
+                    val_loss += loss.item() * xb.size(0)
                 val_loss /= len(val_loader.dataset)
                 self.model.train()
 
