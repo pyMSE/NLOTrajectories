@@ -39,20 +39,20 @@ solver:
   slack_penalty: 50
   use_smooth:  false 
   smooth_weight: 0.2
-  mode: l4casadi  # if l4casadi, learned sdf will be used
+  mode: casadi  # if l4casadi, learned sdf will be used
   initializer:
-    #- mode: rrt
-      #rrt_bounds:
-      #  - [-0.0, -0.0]
-      #  - [1.0, 1.0]
-      #step_size: 0.02
-      #max_iter: 5000
-      #margin: 0.0
-    - mode: default #linear
+    - mode: rrt
+      rrt_bounds:
+        - [-0.0, -0.0]
+        - [1.0, 1.0]
+      step_size: 0.02
+      max_iter: 5000
+      margin: 0.0
+    #- mode: default #linear
   enforce_heading: false # enforce theta = theta_goal
 
 model:
-  type: fourier  # options: siren, fourier, mlp
+  type: mlp  # options: siren, fourier, mlp
   hidden_dim: 128
   num_hidden_layers: 2
   activation_function: ReLU  # ignore for siren and fourier

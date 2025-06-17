@@ -1,0 +1,52 @@
+body:
+  shape: dot
+  dynamic: point_2nd # point_1st
+  goal_mode: center
+  start_state: [0.0, 0.0, 0.0, 0.0]
+  goal_state: [1.0, 1.0, 0.0, 0.0]
+  control_bounds: 
+    - [-2.0,  2.0]
+    - [-2.0,  2.0]
+
+obstacles:
+  - type: polygon
+    points:
+      - [0.5, 0.2]
+      - [0.57, 0.38]
+      - [0.75, 0.38]
+      - [0.6, 0.5]
+      - [0.68, 0.68]
+      - [0.5, 0.58]
+      - [0.32, 0.68]
+      - [0.4, 0.5]
+      - [0.25, 0.38]
+      - [0.43, 0.38]
+    margin: 0.02
+
+solver:
+  N: 40
+  dt: 0.1
+  use_slack: true
+  slack_penalty: 1
+  use_smooth:  false 
+  smooth_weight: 0.2
+  mode: l4casadi
+  initializer:
+    #- mode: rrt
+      #rrt_bounds:
+        #- [-0.0, -0.0]
+        #- [1.0, 1.0]
+      #step_size: 0.02
+      #max_iter: 5000
+      #margin: 0.0
+    - mode: default #linear
+  enforce_heading: false # enforce theta = theta_goal
+
+model:
+  type: mlp  # options: siren, fourier, mlp
+  hidden_dim: 128
+  num_hidden_layers: 2
+  activation_function: ReLU  # ignore for siren and fourier
+  omega_0: 30                # used only for siren
+  surface_loss_weight: 1
+  eikonal_loss_weight: 0.01

@@ -15,17 +15,54 @@ def sample_points(
     x_range: tuple[float, float],
     y_range: tuple[float, float],
     n_samples: int,
+    obstacle: IObstacle = None,
+    margin: float = 0.1,
+    boundary_fraction: float = 0.3,
     random: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Sample points in the plane with extra focus around the obstacle boundary.
+
+    Parameters:
+    - x_range, y_range: domain bounds
+    - n_samples: total number of points to sample
+    - obstacle: an object with sdf(x, y) method (numpy-based)
+    - margin: band width around boundary for extra sampling
+    - boundary_fraction: % of points to sample near the obstacle boundary
+    - random: random or grid global sampling
+    """
+    n_boundary = int(n_samples * boundary_fraction)
+    n_global = n_samples - n_boundary
+
+    # Step 1: global samples
     if random:
-        xs = np.random.uniform(*x_range, size=n_samples)
-        ys = np.random.uniform(*y_range, size=n_samples)
+        xs = np.random.uniform(*x_range, size=n_global)
+        ys = np.random.uniform(*y_range, size=n_global)
     else:
-        side = int(np.sqrt(n_samples))
+        side = int(np.sqrt(n_global))
         xs = np.linspace(*x_range, side)
         ys = np.linspace(*y_range, side)
         xs, ys = np.meshgrid(xs, ys)
         xs, ys = xs.ravel(), ys.ravel()
+
+    # Step 2: boundary-focused samples (only if obstacle is provided)
+    if obstacle is not None and n_boundary > 0:
+        bx, by = [], []
+        tries = 0
+        max_tries = n_boundary * 10
+        while len(bx) < n_boundary and tries < max_tries:
+            x_candidates = np.random.uniform(*x_range, size=n_boundary)
+            y_candidates = np.random.uniform(*y_range, size=n_boundary)
+            sdf_vals = obstacle.sdf(x_candidates, y_candidates)
+            mask = np.abs(sdf_vals) < margin
+            bx.extend(x_candidates[mask])
+            by.extend(y_candidates[mask])
+            tries += 1
+        bx = np.array(bx[:n_boundary])
+        by = np.array(by[:n_boundary])
+        xs = np.concatenate([xs, bx])
+        ys = np.concatenate([ys, by])
+
     return xs, ys
 
 
@@ -38,7 +75,7 @@ class NNObstacleTrainer:
         epochs: int = 100,
         eikonal_weight: float = 0,
         surface_loss_weight: float = 0,
-        n_samples: int = 20000,
+        n_samples: int = 200000,
         random: bool = True,
         batch_size: int = 256,
         lr: float = 1e-3,
@@ -64,7 +101,7 @@ class NNObstacleTrainer:
         n_samples: int,
         random: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        xs, ys = sample_points(x_range, y_range, n_samples, random)
+        xs, ys = sample_points(x_range, y_range, n_samples, self.obstacle, random=random)
         sdf_vals = np.array([self.obstacle.sdf(x, y) for x, y in zip(xs, ys)])
 
         inputs = torch.tensor(np.stack([xs, ys], axis=1), dtype=torch.float32)
@@ -109,7 +146,6 @@ class NNObstacleTrainer:
 
                 # Compute the MSE loss
                 loss = loss_fn(pred, yb)
-
                 # Compute the surface loss
                 if self.surface_loss_weight > 0:
                     surface_loss_value = surface_loss(
@@ -117,7 +153,7 @@ class NNObstacleTrainer:
                         pred,
                         eps=surface_loss_eps,
                     )
-                    # if surface_loss_value is None, dont add it
+                    # if surface_loss_value is None because not common surface points, dont add it
                     if surface_loss_value is not None:
                         loss += self.surface_loss_weight * surface_loss_value
 
@@ -146,16 +182,14 @@ class NNObstacleTrainer:
                 for xb, yb in val_loader:
                     xb, yb = xb.to(self.device), yb.to(self.device)
                     pred = self.model(xb)
-                    # Compute the MSE loss
                     loss = loss_fn(pred, yb)
-                    # Compute the surface loss
                     if self.surface_loss_weight > 0:
                         surface_loss_value = surface_loss(
                             yb,
                             pred,
                             eps=surface_loss_eps,
                         )
-                        # If surface_loss_vaalue is None, dont add it
+                        # if surface_loss_value is NaN because not common surface points, dont add it
                         if surface_loss_value is not None:
                             loss += self.surface_loss_weight * surface_loss_value
                     val_loss += loss.item() * xb.size(0)

@@ -14,6 +14,7 @@ from nlotrajectories.core.sdf.casadi import (
     CircleObstacle,
     IObstacle,
     MultiObstacle,
+    PolygonObstacle,
     SquareObstacle,
 )
 
@@ -62,7 +63,16 @@ class SquareObstacleConfig(BaseModel):
         return SquareObstacle(center=self.center, size=self.size, margin=self.margin)
 
 
-ObstacleConfigs = list[CircleObstacleConfig | SquareObstacleConfig]
+class PolygonObstacleConfig(BaseModel):
+    type: Literal["polygon"]
+    points: list[tuple[float, float]]
+    margin: float = 0.0
+
+    def to_obstacle(self) -> IObstacle:
+        return PolygonObstacle(points=self.points, margin=self.margin)
+
+
+ObstacleConfigs = list[CircleObstacleConfig | SquareObstacleConfig | PolygonObstacleConfig]
 
 
 class ObstacleConfig(RootModel[ObstacleConfigs]):
