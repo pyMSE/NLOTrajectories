@@ -80,10 +80,19 @@ class SolverConfig(BaseModel):
     mode: Literal["casadi", "l4casadi"]
 
 
+class ModelConfig(BaseModel):
+    type: Literal["mlp", "fourier", "siren"] = "mlp"
+    hidden_dim: int = Field(default=64, ge=1)
+    num_hidden_layers: int = Field(default=3, ge=1)
+    activation_function: str = "ReLU"
+    omega_0: float = 30.0  # Only used for SIREN
+
+
 class Config(BaseModel):
     body: BodyConfig
     obstacles: ObstacleConfig
     solver: SolverConfig
+    model: ModelConfig
 
     def get_obstacles(self) -> MultiObstacle:
         return self.obstacles.to_obstacles()

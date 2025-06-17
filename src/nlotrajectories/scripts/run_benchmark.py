@@ -9,6 +9,7 @@ import yaml
 
 from nlotrajectories.core.config import Config
 from nlotrajectories.core.metrics import chamfer, hausdorff, iou, mse, surface_loss
+from nlotrajectories.core.nn_architectures import SIREN, FourierMLP
 from nlotrajectories.core.runner import RunBenchmark
 from nlotrajectories.core.sdf.l4casadi import NNObstacle, NNObstacleTrainer
 from nlotrajectories.core.visualizer import (
@@ -44,17 +45,46 @@ def run_benchmark(config_path: Path):
     obstacles = config.get_obstacles()
 
     if config.solver.mode == "l4casadi":
-        num_hidden_layers = 2
-        hidden_dim = 128
-        activation_function = "ReLU"
-        model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, "ReLU")
+        # model_cfg = getattr(config.solver, "model", {})
+        model_type = config.model.type
+        print(f"Using model type: {model_type}")
+        hidden_dim = config.model.hidden_dim
+        num_hidden_layers = config.model.num_hidden_layers
+        activation_function = config.model.activation_function
+        omega_0 = config.model.omega_0
+
+        if model_type == "mlp":
+            model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, activation_function)
+        elif model_type == "fourier":
+            model = FourierMLP(
+                input_dim=2,
+                hidden_dim=hidden_dim,
+                output_dim=1,
+                num_layers=num_hidden_layers + 2,  # FourierMLP may have an embedding layer
+                activation_function=activation_function,
+            )
+        elif model_type == "siren":
+            model = SIREN(
+                input_dim=2,
+                hidden_dim=hidden_dim,
+                output_dim=1,
+                num_layers=num_hidden_layers + 2,
+                omega_0=omega_0,
+            )
+        else:
+            raise ValueError(f"Unsupported model type: {model_type}")
+
         surface_loss_weight = 1
-        eikonal_weight = 0.1
+        eikonal_weight = 0.01
         trainer = NNObstacleTrainer(
             obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
         )
         trainer.train((-0.5, 1.5), (-0.5, 1.5))
-        obstacles = NNObstacle(obstacles, trainer.model)
+        if type(model) is l4c.naive.MultiLayerPerceptron:
+            obstacles = NNObstacle(obstacles, trainer.model)
+        else:
+            model_l4c = l4c.L4CasADi(trainer.model, device="cpu")
+            obstacles = NNObstacle(obstacles, model_l4c)
 
     x0 = ca.MX(config.body.start_state)
     x_goal = ca.MX(config.body.goal_state)
@@ -113,21 +143,22 @@ def run_benchmark(config_path: Path):
         # If the file doesn't exist, write the header first
         if not file_exists:
             f.write(
-                "solver_mode,num_hidden_layers,hidden_dim,activation_function,"
-                "surface_loss_weight,eikonal_weight,num_steps,objective_value,"
+                "solver_mode,model_type,num_hidden_layers,hidden_dim,activation_function,"
+                "omega_0,surface_loss_weight,eikonal_weight,num_steps,objective_value,"
                 "solver_time,mse,iou,hausdorff,chamfer,surface_loss\n"
             )
         # Append the results
         if config.solver.mode == "l4casadi":
             f.write(
-                f"{config.solver.mode},{num_hidden_layers},{hidden_dim},{activation_function},"
-                f"{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value:3f},"
+                f"{config.solver.mode},{model_type},{num_hidden_layers},{hidden_dim},{activation_function},"
+                f"{omega_0},{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value:3f},"
                 f"{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},{chamfer_value:6f},"
                 f"{surface_loss_value:6f}\n"
             )
+
         else:
             f.write(
-                f"{config.solver.mode},None,None,None,None,None,{config.solver.N},"
+                f"{config.solver.mode},None,None,None,None,None,None,None,{config.solver.N},"
                 f"{objective_value:3f},{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},"
                 f"{chamfer_value:6f},{surface_loss_value:6f}\n"
             )
