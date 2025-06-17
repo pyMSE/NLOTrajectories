@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 
 import casadi as ca
 import numpy as np
-from matplotlib.patches import Circle, Rectangle, Polygon as MplPolygon
-from shapely.geometry import Polygon, Point
+from matplotlib.patches import Circle
+from matplotlib.patches import Polygon as MplPolygon
+from matplotlib.patches import Rectangle
+from shapely.geometry import Point, Polygon
 
 from nlotrajectories.core.utils import soft_min
 

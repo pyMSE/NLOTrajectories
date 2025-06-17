@@ -130,7 +130,12 @@ class RunBenchmark:
             if self.use_slack:
                 print("Slack values (mean):", np.mean(opti.debug.value(slack)))
                 print("Slack values (max):", np.max(opti.debug.value(slack)))
-            print("Dynamics violation:", np.linalg.norm(opti.debug.value(X[:, 1:] - (X[:, :-1] + self.dt * self.dynamics.dynamics(X[:, :-1], U)))) )
+            print(
+                "Dynamics violation:",
+                np.linalg.norm(
+                    opti.debug.value(X[:, 1:] - (X[:, :-1] + self.dt * self.dynamics.dynamics(X[:, :-1], U)))
+                ),
+            )
             X_guess = opti.debug.value(X)
             U_guess = opti.debug.value(U)
             return X_guess, U_guess, opti, "failed"
