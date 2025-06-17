@@ -121,7 +121,8 @@ class RRTInitializer(TrajectoryInitializer):
         n = max(1, int(np.ceil(dist / self.step_size)))
         for i in range(n + 1):
             pt = p1 + (p2 - p1) * (i / n)
-            if self.sdf_func(float(pt[0]), float(pt[1])) < self.inflation:
+            # if self.sdf_func(float(pt[0]), float(pt[1])) < self.inflation:
+            if self.sdf_func(pt[0], pt[1]) < self.inflation:
                 return False
         return True
 

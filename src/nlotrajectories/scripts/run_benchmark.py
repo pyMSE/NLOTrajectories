@@ -142,7 +142,9 @@ def run_benchmark(config_path: Path):
     if status == "failed":
         suffix = "_nn_sdf" if config.solver.mode == "l4casadi" else "_math_sdf"
         plot_levels(obstacles.approximated_sdf, title=f"{config_path.stem}{suffix}")
-        plot_trajectory(X_opt, geometry, obstacles, title=f"{config_path.stem}_guess", goal=config.body.goal_state)
+        plot_trajectory(
+            X_opt, geometry, obstacles, X_init=X_init, title=f"{config_path.stem}_guess", goal=config.body.goal_state
+        )
         return
 
     objective_value = float(opti.debug.value(opti.f))

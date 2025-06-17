@@ -1,9 +1,11 @@
 body:
-  shape: dot
-  dynamic: point_2nd # point_1st
+  shape: rectangle
+  dynamic: unicycle_2nd # point_1st
   goal_mode: center
-  start_state: [0.0, 0.0, 0.0, 0.0]
-  goal_state: [1.0, 1.0, 0.0, 0.0]
+  length: 0.1
+  width: 0.1
+  start_state: [0.5, 0.1, 0.785, 0.0, 0.0]
+  goal_state: [1.0, 1.0, 0.785, 0.0, 0.0]
   control_bounds: 
     - [-2.0,  2.0]
     - [-2.0,  2.0]
@@ -32,14 +34,14 @@ solver:
   smooth_weight: 0.2
   mode: l4casadi
   initializer:
-    #- mode: rrt
-      #rrt_bounds:
-        #- [-0.0, -0.0]
-        #- [1.0, 1.0]
-      #step_size: 0.02
-      #max_iter: 5000
-      #margin: 0.0
-    - mode: default #linear
+    - mode: rrt
+      rrt_bounds:
+        - [-0.0, -0.0]
+        - [1.0, 1.0]
+      step_size: 0.02
+      max_iter: 5000
+      margin: 0.0
+    #- mode: default #linear
   enforce_heading: false # enforce theta = theta_goal
 
 model:
@@ -48,5 +50,5 @@ model:
   num_hidden_layers: 2
   activation_function: ReLU  # ignore for siren and fourier
   omega_0: 30                # used only for siren
-  surface_loss_weight: 1
+  surface_loss_weight: 1.0
   eikonal_loss_weight: 0.01

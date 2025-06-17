@@ -114,8 +114,8 @@ class RunBenchmark:
             {
                 "print_time": False,
                 "ipopt": {
-                    "max_iter": 5000,
-                    "tol": 1e-2,
+                    "max_iter": 1000,
+                    "tol": 1e-4,
                     "mu_strategy": "adaptive",  # Default; try "monotone" if stalling
                     "mu_oracle": "quality-function",  # Helps with choosing better barrier updates
                     "barrier_tol_factor": 0.1,  # Makes it reduce barrier param more carefully
@@ -138,7 +138,7 @@ class RunBenchmark:
             )
             X_guess = opti.debug.value(X)
             U_guess = opti.debug.value(U)
-            return X_guess, U_guess, opti, "failed"
+            return X_guess, U_guess, opti, X_init, "failed"
 
         X_opt = sol.value(X)
         U_opt = sol.value(U)
