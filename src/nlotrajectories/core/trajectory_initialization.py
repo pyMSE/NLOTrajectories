@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 from scipy.interpolate import interp1d
 
-from nlotrajectories.core.geometry import IRobotGeometry, DotGeometry, RectangleGeometry
+from nlotrajectories.core.geometry import DotGeometry, IRobotGeometry, RectangleGeometry
 
 
 class Initializer(str, Enum):
@@ -107,7 +107,7 @@ class RRTInitializer(TrajectoryInitializer):
         self._last_tree = None
 
         # Precompute inflation radius = min distance from footprint points to center + margin
-        if isinstance(self.geometry,RectangleGeometry):
+        if isinstance(self.geometry, RectangleGeometry):
             radii = [np.linalg.norm(np.min(pt)) for pt in geometry.body_points]
             self.inflation = max(radii) + margin
         else:
@@ -189,7 +189,7 @@ class RRTInitializer(TrajectoryInitializer):
         interp_y = interp1d(s, path[:, 1], kind="linear")
         xy = np.vstack([interp_x(s_uniform), interp_y(s_uniform)]).T  # (N,2)
 
-        #if self.geometry == DotGeometry:
+        # if self.geometry == DotGeometry:
         #    state_traj = np.zeros((self.N, 4))
         #    state_traj[:, 0:2] = xy
         #    return state_traj
@@ -203,7 +203,7 @@ class RRTInitializer(TrajectoryInitializer):
         v = np.zeros(self.N)  # or set v = total / ((self.N-1)*self.dt)
         omega = np.zeros(self.N)
 
-        if isinstance(self.geometry,DotGeometry):
+        if isinstance(self.geometry, DotGeometry):
             state_traj = np.zeros((self.N, 4))
             state_traj[:, 0:2] = xy
             return state_traj
