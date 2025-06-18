@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 from scipy.interpolate import interp1d
 
-from nlotrajectories.core.geometry import IRobotGeometry
+from nlotrajectories.core.geometry import IRobotGeometry, DotGeometry, RectangleGeometry
 
 
 class Initializer(str, Enum):
@@ -107,8 +107,11 @@ class RRTInitializer(TrajectoryInitializer):
         self._last_tree = None
 
         # Precompute inflation radius = min distance from footprint points to center + margin
-        radii = [np.linalg.norm(np.min(pt)) for pt in geometry.body_points]
-        self.inflation = max(radii) + margin
+        if isinstance(self.geometry,RectangleGeometry):
+            radii = [np.linalg.norm(np.min(pt)) for pt in geometry.body_points]
+            self.inflation = max(radii) + margin
+        else:
+            self.inflation = 0
 
     def _collision_free(self, p1: np.ndarray, p2: np.ndarray) -> bool:
         """
@@ -186,6 +189,10 @@ class RRTInitializer(TrajectoryInitializer):
         interp_y = interp1d(s, path[:, 1], kind="linear")
         xy = np.vstack([interp_x(s_uniform), interp_y(s_uniform)]).T  # (N,2)
 
+        #if self.geometry == DotGeometry:
+        #    state_traj = np.zeros((self.N, 4))
+        #    state_traj[:, 0:2] = xy
+        #    return state_traj
         # --- 3. Lift to full-state ---
         theta = np.zeros(self.N)
         for k in range(self.N - 1):
@@ -195,6 +202,11 @@ class RRTInitializer(TrajectoryInitializer):
 
         v = np.zeros(self.N)  # or set v = total / ((self.N-1)*self.dt)
         omega = np.zeros(self.N)
+
+        if isinstance(self.geometry,DotGeometry):
+            state_traj = np.zeros((self.N, 4))
+            state_traj[:, 0:2] = xy
+            return state_traj
 
         state_traj = np.zeros((self.N, 5))
         state_traj[:, 0:2] = xy

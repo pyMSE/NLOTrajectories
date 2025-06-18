@@ -183,20 +183,18 @@ def run_benchmark(config_path: Path):
         # Append the results
         if config.solver.mode == "l4casadi":
             f.write(
-                f"{config.solver.mode},{model_type},{num_hidden_layers},{hidden_dim},{activation_function},"
-                f"{omega_0},{surface_loss_weight},{eikonal_weight},{config.solver.N},{objective_value:3f},"
-                f"{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},{chamfer_value:6f},"
-                f"{surface_loss_value:6f},{config.solver.enforce_heading},{config.solver.use_smooth},"
-                f"{config.solver.smooth_weight}\n"
-            )
+            f"{config.solver.mode},{model_type},{num_hidden_layers},{hidden_dim},{activation_function},"
+            f"{omega_0},{surface_loss_weight},{eikonal_weight},{config.solver.N},{init_cfg.mode},"
+            f"{objective_value:3f},{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},"
+            f"{chamfer_value:6f},{surface_loss_value:6f}\n"
+        )
 
         else:
             f.write(
-                f"{config.solver.mode},None,None,None,None,None,None,None,{config.solver.N},"
-                f"{objective_value:3f},{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},"
-                f"{chamfer_value:6f},{surface_loss_value:6f},{config.solver.enforce_heading},"
-                f"{config.solver.use_smooth},{config.solver.smooth_weight}\n"
-            )
+            f"{config.solver.mode},None,None,None,None,None,None,None,{config.solver.N},{init_cfg.mode},"
+            f"{objective_value:3f},{solver_time:2f},{mse_value:6f},{iou_value:6f},{hausdorff_value:6f},"
+            f"{chamfer_value:6f},{surface_loss_value:6f}\n"
+        )
 
 
 def main():
