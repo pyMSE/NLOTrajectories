@@ -91,12 +91,19 @@ def animation_plot(X_opt, U_opt, geometry, obstacles, title: str = "Trajectory A
     elif X_opt.shape[0] == 3:  # unicycle first order
         vx_vals = U_opt[0, :] * np.cos(X_opt[2, :])
         vy_vals = U_opt[0, :] * np.sin(X_opt[2, :])
-    elif X_opt.shape[0] == 4:  # dot second order
-        vx_vals = X_opt[2, :]
-        vy_vals = X_opt[3, :]
+    elif X_opt.shape[0] == 4:  # dot second order or ackermann first order
+        if isinstance(geometry, DotGeometry):
+            vx_vals = X_opt[2, :]
+            vy_vals = X_opt[3, :]
+        else:  # ackermann first order
+            vx_vals = U_opt[0, :] * np.cos(X_opt[2, :])
+            vy_vals = U_opt[0, :] * np.sin(X_opt[2, :])
     elif X_opt.shape[0] == 5:  # unicycle second order
         vx_vals = X_opt[3, :] * np.cos(X_opt[2, :])
         vy_vals = X_opt[3, :] * np.sin(X_opt[2, :])
+    elif X_opt.shape[0] == 7:  # ackermann second order
+        vx_vals = X_opt[4, :] * np.cos(X_opt[2, :])
+        vy_vals = X_opt[4, :] * np.sin(X_opt[2, :])
     else:
         raise ValueError("Unsupported state dimension for animation.")
     # ---------- Create Figure and Axes ----------

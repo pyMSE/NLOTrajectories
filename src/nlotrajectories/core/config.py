@@ -25,6 +25,7 @@ class BodyConfig(BaseModel):
     goal_mode: GoalMode = GoalMode.CENTER
     length: float | None = None
     width: float | None = None
+    wheelbase: float | None = None
     start_state: list[float]
     goal_state: list[float]
     control_bounds: list[tuple[float, float]]
@@ -38,6 +39,8 @@ class BodyConfig(BaseModel):
 
     def create_dynamics(self) -> IRobotDynamics:
         cls = DYNAMICS_CLASS_MAP.get(self.dynamic)
+        if self.dynamic == Dynamics.ACKERMANN or self.dynamic == Dynamics.ACKERMANN_2ND:
+            return cls(self.wheelbase)
         if cls is None:
             raise ValueError(f"Unknown dynamics type: {self.dynamic}")
         return cls()
