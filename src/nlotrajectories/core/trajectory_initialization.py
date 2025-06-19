@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 from scipy.interpolate import interp1d
 
-from nlotrajectories.core.geometry import IRobotGeometry, DotGeometry, RectangleGeometry
+from nlotrajectories.core.geometry import DotGeometry, IRobotGeometry, RectangleGeometry
 
 
 class Initializer(str, Enum):
@@ -197,9 +197,9 @@ class RRTInitializer(TrajectoryInitializer):
             theta[k] = math.atan2(dy, dx)
         theta[-1] = theta[-2]
 
-        if isinstance(self.geometry, DotGeometry):             
-            state_traj = np.zeros((self.N, 4))             
-            state_traj[:, 0:2] = xy             
+        if isinstance(self.geometry, DotGeometry):
+            state_traj = np.zeros((self.N, 4))
+            state_traj[:, 0:2] = xy
             return state_traj
 
         v = np.zeros(self.N)  # or set v = total / ((self.N-1)*self.dt)
