@@ -230,7 +230,7 @@ class SimplePlannerUI:
         if self.change_config:
             self.save_yaml()
         try:
-            X_opt = run_benchmark(self.config, plot=False)
+            X_opt = run_benchmark(self.config, verbose=False)
             if X_opt is not None and X_opt.shape[0] >= 2:
                 self.optimized_trajectory = X_opt
                 self.update_plot(preserve_optimized=True)

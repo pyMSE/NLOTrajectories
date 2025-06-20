@@ -78,7 +78,19 @@ class RunBenchmark:
         opti.subject_to(opti.bounded(umin, U, umax))
 
         # Solver
-        opti.solver("ipopt")
+        # opti.solver("ipopt")
+        opti.solver(
+            "ipopt",
+            {
+                "print_time": False,
+                "ipopt": {
+                    "max_iter": 1000,
+                    "mu_strategy": "adaptive",  # Default; try "monotone" if stalling
+                    "mu_oracle": "quality-function",  # Helps with choosing better barrier updates
+                    "barrier_tol_factor": 0.1,  # Makes it reduce barrier param more carefully
+                },
+            },
+        )
         sol = opti.solve()
 
         X_opt = sol.value(X)
