@@ -197,19 +197,9 @@ class RRTInitializer(TrajectoryInitializer):
             theta[k] = math.atan2(dy, dx)
         theta[-1] = theta[-2]
 
-        if isinstance(self.geometry, DotGeometry):
-            state_traj = np.zeros((self.N, 4))
-            state_traj[:, 0:2] = xy
-            return state_traj
-
-        v = np.zeros(self.N)  # or set v = total / ((self.N-1)*self.dt)
-        omega = np.zeros(self.N)
-
-        state_traj = np.zeros((self.N, 5))
+        state_traj = np.zeros((self.N, self.x0.shape[1]))
         state_traj[:, 0:2] = xy
-        state_traj[:, 2] = theta
-        state_traj[:, 3] = v
-        state_traj[:, 4] = omega
+
         return state_traj
 
     def get_initial_guess(self) -> np.ndarray:
