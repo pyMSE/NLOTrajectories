@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, splprep, splev
 
 from nlotrajectories.core.geometry import DotGeometry, IRobotGeometry, RectangleGeometry
 
@@ -129,6 +129,37 @@ class RRTInitializer(TrajectoryInitializer):
                 return False
         return True
 
+    def _shortcut_path(self, path: np.ndarray) -> np.ndarray:
+        def is_collision_free(p1, p2):
+            dist = np.linalg.norm(p2 - p1)
+            n = max(1, int(np.ceil(dist / self.step_size)))
+            for i in range(n + 1):
+                pt = p1 + (p2 - p1) * (i / n)
+                if self.sdf_func(pt[0], pt[1]) < self.inflation:
+                    return False
+            return True
+
+        new_path = [path[0]]
+        i = 0
+        while i < len(path) - 1:
+            j = len(path) - 1
+            while j > i + 1:
+                if is_collision_free(path[i], path[j]):
+                    break
+                j -= 1
+            new_path.append(path[j])
+            i = j
+        return np.array(new_path)
+    
+    def _bspline_curve(self, points: np.ndarray, num_points: int) -> np.ndarray:
+        if len(points) <= 3:
+            return points  # 不拟合，点太少
+        k = min(3, len(points) - 1)
+        tck, _ = splprep([points[:, 0], points[:, 1]], s=0, k=k)
+        u_new = np.linspace(0, 1.0, num_points)
+        out = splev(u_new, tck)
+        return np.vstack([out[0], out[1]]).T
+
     def _build_rrt_path(self, start: np.ndarray, end: np.ndarray) -> np.ndarray:
         """
         1) Run RRT in XY plane from start[:2] to end[:2].
@@ -181,22 +212,25 @@ class RRTInitializer(TrajectoryInitializer):
         path = np.array(path[::-1])  # shape (M,2)
 
         # cumulative arc-length
-        seg_lens = np.linalg.norm(np.diff(path, axis=0), axis=1)
-        s = np.concatenate([[0], np.cumsum(seg_lens)])
-        total = s[-1]
-        s_uniform = np.linspace(0, total, self.N)
+        #seg_lens = np.linalg.norm(np.diff(path, axis=0), axis=1)
+        #s = np.concatenate([[0], np.cumsum(seg_lens)])
+        #total = s[-1]
+        #s_uniform = np.linspace(0, total, self.N)
 
-        interp_x = interp1d(s, path[:, 0], kind="linear")
-        interp_y = interp1d(s, path[:, 1], kind="linear")
-        xy = np.vstack([interp_x(s_uniform), interp_y(s_uniform)]).T  # (N,2)
+        #interp_x = interp1d(s, path[:, 0], kind="linear")
+        #interp_y = interp1d(s, path[:, 1], kind="linear")
+        #xy = np.vstack([interp_x(s_uniform), interp_y(s_uniform)]).T  # (N,2)
+        # --- 2b. Optional path shortcut ---
+        path = self._shortcut_path(path)
+        # --- 2c. Smooth path with B-spline ---
+        xy = self._bspline_curve(path, self.N)
 
         # --- 3. Lift to full-state ---
-        theta = np.zeros(self.N)
-        for k in range(self.N - 1):
-            dx, dy = xy[k + 1] - xy[k]
-            theta[k] = math.atan2(dy, dx)
-        theta[-1] = theta[-2]
-
+        #theta = np.zeros(self.N)
+        #for k in range(self.N - 1):
+        #    dx, dy = xy[k + 1] - xy[k]
+        #    theta[k] = math.atan2(dy, dx)
+        #theta[-1] = theta[-2]
         state_traj = np.zeros((self.N, self.x0.shape[1]))
         state_traj[:, 0:2] = xy
 
