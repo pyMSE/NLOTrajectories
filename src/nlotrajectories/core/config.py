@@ -133,6 +133,7 @@ class SolverConfig(BaseModel):
         default_factory=lambda: InitializerConfig(root=[{"mode": "linear"}]), description="Casadi Initializer"
     )
     enforce_heading: bool = True
+    type: Literal["ipopt","sqpmethod"]
 
 
 class ModelConfig(BaseModel):
