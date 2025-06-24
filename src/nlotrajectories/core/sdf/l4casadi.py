@@ -66,6 +66,14 @@ def sample_points(
     return xs, ys
 
 
+def initialize_weights(model):
+    for layer in model.modules():
+        if isinstance(layer, nn.Linear):  # Apply to linear layers
+            nn.init.kaiming_uniform_(layer.weight, nonlinearity="relu")  # Xavier initialization
+            if layer.bias is not None:
+                nn.init.zeros_(layer.bias)  # Initialize biases to zero
+
+
 class NNObstacleTrainer:
     def __init__(
         self,
@@ -85,6 +93,9 @@ class NNObstacleTrainer:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = device
         self.model = model.to(device)
+
+        # Initialize model weights with Xavier initialization for ReLU activations
+        initialize_weights(self.model)  # Initialize weights
 
         self.epochs = epochs
         self.eikonal_weight = eikonal_weight
