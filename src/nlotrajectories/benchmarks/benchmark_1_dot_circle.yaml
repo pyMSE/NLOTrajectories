@@ -32,7 +32,7 @@ solver:
       margin: 0.0
     #- mode: linear #linear
   enforce_heading: false # enforce theta = theta_goal
-  #type: ipopt #options: ipopt, sq
+  type: ipopt #options: ipopt, sq
 
 
 model:

@@ -152,12 +152,26 @@ class RRTInitializer(TrajectoryInitializer):
 
     def _bspline_curve(self, points: np.ndarray, num_points: int) -> np.ndarray:
         if len(points) <= 2:
-            return points
+            return np.linspace(points[0], points[-1], num_points)
         s = np.linspace(0, 1, len(points))
         cs_x = CubicSpline(s, points[:, 0])
         cs_y = CubicSpline(s, points[:, 1])
         s_new = np.linspace(0, 1, num_points)
         return np.vstack((cs_x(s_new), cs_y(s_new))).T
+    
+    def insert_intermediate_points(self, points, max_angle_deg=60):
+        new_points = [points[0]]
+        for i in range(1, len(points) - 1):
+            v1 = points[i] - points[i - 1]
+            v2 = points[i + 1] - points[i]
+            angle = np.arccos(np.clip(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+            angle_deg = np.degrees(angle)
+            if angle_deg > max_angle_deg:
+                midpoint = (points[i] + points[i - 1]) / 2
+                new_points.append(midpoint)
+            new_points.append(points[i])
+        new_points.append(points[-1])
+        return np.array(new_points)
 
     def _build_rrt_path(self, start: np.ndarray, end: np.ndarray) -> np.ndarray:
         """
@@ -211,6 +225,7 @@ class RRTInitializer(TrajectoryInitializer):
         path = np.array(path[::-1])  # shape (M,2)
 
         # --- 2b. Optional path shortcut ---
+        path = self.insert_intermediate_points(path)
         path = self._shortcut_path(path)
         # --- 2c. Smooth path with B-spline ---
         xy = self._bspline_curve(path, self.N)
