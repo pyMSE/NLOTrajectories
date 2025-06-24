@@ -145,6 +145,12 @@ def run_benchmark(config_path: Path):
         plot_trajectory(
             X_opt, geometry, obstacles, X_init=X_init, title=f"{config_path.stem}_guess", goal=config.body.goal_state
         )
+        mse_value, iou_value, hausdorff_value, chamfer_value, surface_loss_value = compute_metrics(obstacles)
+        print("MSE:", mse_value)
+        print("IoU:", iou_value)
+        print("Hausdorff:", hausdorff_value)
+        print("Chamfer:", chamfer_value)
+        print("Surface loss:", surface_loss_value)
         return
 
     objective_value = float(opti.debug.value(opti.f))

@@ -25,6 +25,7 @@ class RunBenchmark:
         smooth_weight: float = 1000,
         initializer: TrajectoryInitializer = None,
         enforce_heading: bool = True,
+        solver_type: str = "ipopt",
     ):
         self.dynamics = dynamics
         self.geometry = geometry
@@ -40,6 +41,7 @@ class RunBenchmark:
         self.smooth_weight = smooth_weight
         self.initializer = initializer
         self.enforce_heading = enforce_heading
+        self.solver_type = solver_type
 
     def run(self):
         opti = ca.Opti()
@@ -109,19 +111,27 @@ class RunBenchmark:
 
         # Solver
         # opti.solver("ipopt")
-        opti.solver(
-            "ipopt",
-            {
-                "print_time": False,
-                "ipopt": {
-                    "max_iter": 1000,
-                    "tol": 1e-4,
-                    "mu_strategy": "adaptive",  # Default; try "monotone" if stalling
-                    "mu_oracle": "quality-function",  # Helps with choosing better barrier updates
-                    "barrier_tol_factor": 0.1,  # Makes it reduce barrier param more carefully
+        if self.solver_type == "ipopt":
+            opti.solver(
+                "ipopt",
+                {
+                    "print_time": False,
+                    "ipopt": {
+                        "max_iter": 1000,
+                        "tol": 1e-4,
+                        "mu_strategy": "adaptive",  # Default; try "monotone" if stalling
+                        "mu_oracle": "quality-function",  # Helps with choosing better barrier updates
+                        "barrier_tol_factor": 0.05,  # Makes it reduce barrier param more carefully
+                    },
                 },
-            },
-        )
+            )
+        elif self.solver_type == "sqpmethod":
+            opti.solver(
+                "sqpmethod",
+            )
+        else:
+            raise ValueError(f"Unsupported solver type: {self.solver_type}")
+
         try:
             sol = opti.solve()
         except RuntimeError as e:

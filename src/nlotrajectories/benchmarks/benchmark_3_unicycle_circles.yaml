@@ -15,6 +15,10 @@ obstacles:
     center: [0.5, 0.5]
     radius: 0.2
     margin: 0.01
+  - type: circle
+    center: [0.5, 1.1]
+    radius: 0.05
+    margin: 0.01
   - type: square
     center: [1.2, 0.37]
     size: 0.1
@@ -29,7 +33,11 @@ obstacles:
     margin: 0.01
   - type: square
     center: [0.4, 0.1]
-    size: 0.2
+    size: 0.1
+    margin: 0.01
+  - type: square
+    center: [0.6, 0.1]
+    size: 0.1
     margin: 0.01
 
 solver:
@@ -39,7 +47,7 @@ solver:
   slack_penalty: 50
   use_smooth:  false 
   smooth_weight: 0.2
-  mode: casadi  # if l4casadi, learned sdf will be used
+  mode: l4casadi  # if l4casadi, learned sdf will be used
   initializer:
     - mode: rrt
       rrt_bounds:
@@ -48,8 +56,9 @@ solver:
       step_size: 0.02
       max_iter: 5000
       margin: 0.0
-    #- mode: default #linear
+    #- mode: linear #linear
   enforce_heading: false # enforce theta = theta_goal
+  #type: ipopt #options: ipopt, sq
 
 model:
   type: mlp  # options: siren, fourier, mlp
@@ -57,7 +66,7 @@ model:
   num_hidden_layers: 2
   activation_function: ReLU  # ignore for siren and fourier
   omega_0: 30                # used only for siren
-  surface_loss_weight: 1
-  eikonal_loss_weight: 0.01
+  surface_loss_weight: 0
+  eikonal_loss_weight: 0
 
 

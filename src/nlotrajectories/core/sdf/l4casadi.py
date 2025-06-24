@@ -93,6 +93,7 @@ class NNObstacleTrainer:
         self.random = random
         self.batch_size = batch_size
         self.lr = lr
+        print(f"Using surface loss weight: {self.surface_loss_weight}, eikonal weight: {self.eikonal_weight}")
 
     def generate_data(
         self,

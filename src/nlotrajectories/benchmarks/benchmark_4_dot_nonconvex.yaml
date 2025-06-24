@@ -43,6 +43,7 @@ solver:
       margin: 0.0
     #- mode: default #linear
   enforce_heading: false # enforce theta = theta_goal
+  type: ipopt
 
 model:
   type: mlp  # options: siren, fourier, mlp

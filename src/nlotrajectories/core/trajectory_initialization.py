@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import numpy as np
-from scipy.interpolate import interp1d, splprep, splev
+from scipy.interpolate import interp1d, splev, splprep
 
 from nlotrajectories.core.geometry import DotGeometry, IRobotGeometry, RectangleGeometry
 
@@ -150,7 +150,7 @@ class RRTInitializer(TrajectoryInitializer):
             new_path.append(path[j])
             i = j
         return np.array(new_path)
-    
+
     def _bspline_curve(self, points: np.ndarray, num_points: int) -> np.ndarray:
         if len(points) <= 3:
             return points  # 不拟合，点太少
@@ -212,26 +212,26 @@ class RRTInitializer(TrajectoryInitializer):
         path = np.array(path[::-1])  # shape (M,2)
 
         # cumulative arc-length
-        #seg_lens = np.linalg.norm(np.diff(path, axis=0), axis=1)
-        #s = np.concatenate([[0], np.cumsum(seg_lens)])
-        #total = s[-1]
-        #s_uniform = np.linspace(0, total, self.N)
+        # seg_lens = np.linalg.norm(np.diff(path, axis=0), axis=1)
+        # s = np.concatenate([[0], np.cumsum(seg_lens)])
+        # total = s[-1]
+        # s_uniform = np.linspace(0, total, self.N)
 
-        #interp_x = interp1d(s, path[:, 0], kind="linear")
-        #interp_y = interp1d(s, path[:, 1], kind="linear")
-        #xy = np.vstack([interp_x(s_uniform), interp_y(s_uniform)]).T  # (N,2)
+        # interp_x = interp1d(s, path[:, 0], kind="linear")
+        # interp_y = interp1d(s, path[:, 1], kind="linear")
+        # xy = np.vstack([interp_x(s_uniform), interp_y(s_uniform)]).T  # (N,2)
         # --- 2b. Optional path shortcut ---
         path = self._shortcut_path(path)
         # --- 2c. Smooth path with B-spline ---
         xy = self._bspline_curve(path, self.N)
 
         # --- 3. Lift to full-state ---
-        #theta = np.zeros(self.N)
-        #for k in range(self.N - 1):
+        # theta = np.zeros(self.N)
+        # for k in range(self.N - 1):
         #    dx, dy = xy[k + 1] - xy[k]
         #    theta[k] = math.atan2(dy, dx)
-        #theta[-1] = theta[-2]
-        state_traj = np.zeros((self.N, self.x0.shape[1]))
+        # theta[-1] = theta[-2]
+        state_traj = np.zeros((self.N, self.x0.shape[0]))
         state_traj[:, 0:2] = xy
 
         return state_traj
