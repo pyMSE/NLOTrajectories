@@ -1,0 +1,70 @@
+body:
+  shape: rectangle
+  dynamic: ackermann_2nd #ackermann_2nd
+  goal_mode: center
+  length: 0.08
+  width: 0.03
+  wheelbase: 0.05
+  start_state: [0.0, 0.4, -0.785, 0, 0.0, 0.0, 0.0]
+  goal_state: [1.0, 0.5, 0, 0, 0.0, 0.0, 0.0]
+  control_bounds: 
+    - [-2.0,  2.0]
+    - [-3.0,  3.0]
+
+obstacles:
+  - type: ring
+    center: [0.25, 0.3]
+    radius: 0.25
+    width: 0.05
+    angle: 3.14 # half circle
+    margin: 0.01
+  # - type: circle
+  #   center: [0.2, 0.6]
+  #   radius: 0.1
+  #   margin: 0.01
+  - type: ring
+    center: [0.25, 0.7]
+    radius: 0.25
+    width: 0.05
+    angle: 3.14 # half circle
+    margin: 0.01
+  - type: ring
+    center: [0.7, 0.6]
+    radius: 0.25
+    width: 0.05
+    angle: -3.14 # half circle upside down
+    margin: 0.01
+  - type: ring
+    center: [0.7, 0.2]
+    radius: 0.25
+    width: 0.05
+    angle: -3.14 # half circle upside down
+    margin: 0.01
+solver:
+  N: 50
+  dt: 0.05
+  use_slack: false
+  slack_penalty: 1
+  use_smooth:  true 
+  smooth_weight: 0.5
+  mode: l4casadi
+  initializer:
+    - mode: rrt
+      rrt_bounds:
+        - [-0.0, -0.0]
+        - [1.3, 1.3]
+      step_size: 0.02
+      max_iter: 5000
+      margin: 0.01
+    # - mode: default #linear
+  enforce_heading: false # enforce theta = theta_goal
+  type: ipopt
+
+model:
+  type: mlp  # options: siren, fourier, mlp
+  hidden_dim: 128
+  num_hidden_layers: 2
+  activation_function: ReLU  # ignore for siren and fourier
+  omega_0: 30                # used only for siren
+  surface_loss_weight: 1.0
+  eikonal_loss_weight: 0.01
