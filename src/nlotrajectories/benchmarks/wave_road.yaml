@@ -3,7 +3,7 @@ body:
   dynamic: ackermann_2nd #ackermann_2nd
   goal_mode: center
   length: 0.08
-  width: 0.03
+  width: 0.05
   wheelbase: 0.05
   start_state: [0.0, 0.4, -0.785, 0, 0.0, 0.0, 0.0]
   goal_state: [1.0, 0.5, 0, 0, 0.0, 0.0, 0.0]
