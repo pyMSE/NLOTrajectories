@@ -1,5 +1,5 @@
 from typing import List, Literal, Union
-
+import numpy as np
 from pydantic import BaseModel, Field, RootModel
 
 from nlotrajectories.core.dynamics import DYNAMICS_CLASS_MAP, Dynamics, IRobotDynamics
@@ -16,6 +16,7 @@ from nlotrajectories.core.sdf.casadi import (
     MultiObstacle,
     PolygonObstacle,
     SquareObstacle,
+    RingObstacle,
 )
 
 
@@ -75,7 +76,24 @@ class PolygonObstacleConfig(BaseModel):
         return PolygonObstacle(points=self.points, margin=self.margin)
 
 
-ObstacleConfigs = list[CircleObstacleConfig | SquareObstacleConfig | PolygonObstacleConfig]
+class RingObstacleConfig(BaseModel):
+    type: Literal["ring"]
+    center: tuple[float, float]
+    radius: float
+    width: float
+    angle: float = np.pi
+    margin: float = 0.0
+    def to_obstacle(self) -> IObstacle:
+        return RingObstacle(
+            center=self.center, 
+            radius=self.radius, 
+            width=self.width, 
+            angle=self.angle,
+            margin=self.margin
+        )
+    
+
+ObstacleConfigs = list[CircleObstacleConfig | SquareObstacleConfig | PolygonObstacleConfig | RingObstacleConfig]
 
 
 class ObstacleConfig(RootModel[ObstacleConfigs]):

@@ -189,6 +189,34 @@ class PolygonObstacle(IObstacle):
         polygon_patch = MplPolygon(self.points, closed=True, **kwargs)
         ax.add_patch(polygon_patch)
 
+class RingObstacle(PolygonObstacle):
+    def __init__(
+        self,
+        center: tuple[float, float],
+        radius: float,
+        width: float,
+        angle: float = np.pi,
+        num_arc_points: int = 30,
+        margin: float = 0.0,
+    ):
+        """
+        A half-ring obstacle: the region between outer radius R and inner radius R−width,
+        only for the “upper” half (angles 0→π).
+        """
+        self.center = np.array(center)
+        self.outer_r = radius
+        self.inner_r = radius - width
+        self.margin = margin
+        self.angle = angle
+
+        cx, cy = self.center
+        # Generate points for outer and inner arcs
+        t = np.linspace(0.0, self.angle, num_arc_points)
+        outer = [(cx - self.outer_r * np.cos(ti), cy - self.outer_r * np.sin(ti)) for ti in t]
+        inner = [(cx - self.inner_r * np.cos(ti), cy - self.inner_r * np.sin(ti)) for ti in t[::-1]]
+
+        super().__init__(points=outer + inner, margin=margin)
+
 
 class MultiObstacle(IObstacle):
     def __init__(self, obstacles: list[IObstacle]):
