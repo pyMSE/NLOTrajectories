@@ -1,4 +1,5 @@
 from typing import List, Literal, Union
+
 import numpy as np
 from pydantic import BaseModel, Field, RootModel
 
@@ -12,13 +13,13 @@ from nlotrajectories.core.geometry import (
 )
 from nlotrajectories.core.sdf.casadi import (
     CircleObstacle,
+    ConvexSObstacle,
+    EllipticRingObstacle,
     IObstacle,
     MultiObstacle,
     PolygonObstacle,
     SquareObstacle,
-    EllipticRingObstacle,
     TrapezoidObstacle,
-    ConvexSObstacle
 )
 
 
@@ -96,7 +97,7 @@ class EllipticRingObstacleConfig(BaseModel):
             angle=self.angle,
             margin=self.margin,
             rotation=self.rotation,
-            num_arc_points=self.num_arc_points
+            num_arc_points=self.num_arc_points,
         )
 
 
@@ -118,8 +119,9 @@ class DiscreteSObstacleConfig(BaseModel):
             angle=self.angle,
             margin=self.margin,
             rotation=self.rotation,
-            num_arc_points=self.num_arc_points
+            num_arc_points=self.num_arc_points,
         )
+
 
 class TrapezoidObstacleConfig(BaseModel):
     type: Literal["trapezoid"]
@@ -130,7 +132,14 @@ class TrapezoidObstacleConfig(BaseModel):
         return TrapezoidObstacle(points=self.points, margin=self.margin)
 
 
-ObstacleConfigs = list[CircleObstacleConfig | SquareObstacleConfig | PolygonObstacleConfig | EllipticRingObstacleConfig | TrapezoidObstacleConfig | DiscreteSObstacleConfig]
+ObstacleConfigs = list[
+    CircleObstacleConfig
+    | SquareObstacleConfig
+    | PolygonObstacleConfig
+    | EllipticRingObstacleConfig
+    | TrapezoidObstacleConfig
+    | DiscreteSObstacleConfig
+]
 
 
 class ObstacleConfig(RootModel[ObstacleConfigs]):
@@ -188,7 +197,7 @@ class SolverConfig(BaseModel):
         default_factory=lambda: InitializerConfig(root=[{"mode": "linear"}]), description="Casadi Initializer"
     )
     enforce_heading: bool = True
-    type: Literal["ipopt","sqpmethod"]
+    type: Literal["ipopt", "sqpmethod"]
 
 
 class ModelConfig(BaseModel):
