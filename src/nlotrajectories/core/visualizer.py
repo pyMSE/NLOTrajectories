@@ -7,6 +7,28 @@ from matplotlib.patches import Polygon
 
 from nlotrajectories.core.geometry import DotGeometry
 
+def plot_sampling(obstacles, xs=None, ys=None, title="Sampling", goal=None):
+    path = Path("result")
+    path.mkdir(parents=True, exist_ok=True)
+
+    _, ax = plt.subplots()
+
+    # Plot obstacles
+    obstacles.draw(ax, alpha=0.7, color="r")
+
+    # Plot sampling points if provided
+    if xs is not None and ys is not None:
+        ax.scatter(xs, ys, s=0.1, c='b', alpha=0.1, label="Samples")
+
+    ax.set_aspect("equal")
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    plt.savefig(path / f"{title}.png", bbox_inches="tight")
+    plt.close()
+
 
 def plot_trajectory(X_opt, geometry, obstacles, X_init, title="Trajectory", goal=None):
     path = Path("result")
@@ -47,7 +69,6 @@ def plot_levels(func, x_range=(-1, 2), y_range=(-1, 2), n_samples=500, title="sd
     plt.contour(X, Y, Z, levels=[0], colors="red")
     contours = plt.contour(X, Y, Z, levels=levels, colors="black")
     plt.clabel(contours, inline=True, fontsize=8, fmt="%1.2f")
-    plt.colorbar(label="f(x, y)")
     plt.title(f"Levels for {title}")
     plt.axis("equal")
     plt.savefig(path / f"{title}_levels.png", bbox_inches="tight")
