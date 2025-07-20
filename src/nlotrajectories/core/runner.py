@@ -94,7 +94,7 @@ class RunBenchmark:
         if self.use_smooth:
             smooth_term = 0
             for k in range(self.N - 1):
-                smooth_term += ca.sumsqr(U[:, k + 1] - U[:, k])
+                smooth_term += ca.sumsqr(U[:,k]) # ca.sumsqr(U[:, k + 1] - U[:, k])
             total_cost += self.smooth_weight * smooth_term
 
         opti.minimize(total_cost)

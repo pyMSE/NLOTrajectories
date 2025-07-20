@@ -189,6 +189,188 @@ class PolygonObstacle(IObstacle):
         polygon_patch = MplPolygon(self.points, closed=True, **kwargs)
         ax.add_patch(polygon_patch)
 
+class EllipticRingObstacle(PolygonObstacle):
+    def __init__(
+        self,
+        center: tuple[float, float],
+        semi_axes: tuple[float, float],
+        width: float,
+        angle: float = np.pi,
+        num_arc_points: int = 15,
+        margin: float = 0.0,
+        rotation: float = 0.0,
+    ):
+        """
+        An elliptic half-ring obstacle: the region between outer and inner ellipses,
+        only for the “upper” part (from angle 0 to `angle`).
+        
+        Args:
+            center: (x, y) coordinates of the ellipse center.
+            semi_axes: Tuple (a, b) where 'a' is the semi-major axis, 'b' is the semi-minor axis of the outer ellipse.
+            width: Radial width of the ring (subtracted from both semi-major and semi-minor axes for the inner ellipse).
+            angle: Angular span of the half-ring in radians (default is np.pi for a half-ellipse).
+            num_arc_points: Number of points to sample along each arc.
+            margin: Safety margin to apply.
+            rotation: Rotation of the entire shape (in radians).
+        """
+        self.center = np.array(center)
+        self.outer_a, self.outer_b = semi_axes
+        self.inner_a = self.outer_a - width
+        self.inner_b = self.outer_b - width
+        self.margin = margin
+        self.angle = angle
+        self.rotation = rotation
+
+        if self.inner_a <= 0 or self.inner_b <= 0:
+            raise ValueError("Width too large for given semi-axes.")
+
+        cx, cy = self.center
+
+        # Generate the outer and inner arcs (before rotation)
+        t = np.linspace(0.0, self.angle, num_arc_points)
+
+        outer = [(self.outer_a * np.cos(ti), self.outer_b * np.sin(ti)) for ti in t]
+        inner = [(self.inner_a * np.cos(ti), self.inner_b * np.sin(ti)) for ti in t[::-1]]
+
+        # Combine and translate the arcs
+        points = outer + inner
+
+        # Apply rotation and translate to center
+        rotated_translated_points = [
+            (
+                cx + (x * np.cos(self.rotation) - y * np.sin(self.rotation)),
+                cy + (x * np.sin(self.rotation) + y * np.cos(self.rotation)),
+            )
+            for x, y in points
+        ]
+
+        super().__init__(points=rotated_translated_points, margin=margin)
+
+class TrapezoidObstacle(PolygonObstacle):
+    """
+    Axis-aligned trapezoid with horizontal bases.
+
+    Parameters
+    ----------
+    center : (float, float)
+    top_width : float            # width of the top base  (y = +h/2)
+    bottom_width : float         # width of the bottom base (y = −h/2)
+    height : float               # total height
+    margin : float, optional     # safety margin
+    """
+    def __init__(
+        self,
+        points: list[tuple[float, float]],
+        margin: float = 0.0,
+        k: float = 200.0,
+    ):
+        if len(points) != 4:
+            raise ValueError("TrapezoidObstacle requires exactly 4 vertices.")
+        super().__init__(points=points, margin=margin)
+        self.k = k
+        # Precompute edge normals and vertices for half-space distance
+        self._edges = []
+        V = np.array(points, dtype=float)
+        for i in range(4):
+            a = V[i]
+            b = V[(i + 1) % 4]
+            e = b - a
+            # inward normal = (e.y, -e.x) / ||e||
+            n = np.array([e[1], -e[0]]) / (np.linalg.norm(e) + 1e-8)
+            self._edges.append((a, n))
+
+    # ------------------------------------------------------------------
+    # Soft helpers (vectorised & CasADi-friendly)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _soft_abs(val, is_numpy):
+        return ca.sqrt(val**2 + 1e-8) if not is_numpy else np.sqrt(val**2 + 1e-8)
+
+    @staticmethod
+    def _soft_max(a, b, is_numpy):
+        return 0.5 * (a + b + TrapezoidObstacle._soft_abs(a - b, is_numpy))
+
+    @staticmethod
+    def _soft_min(a, b, is_numpy):
+        return 0.5 * (a + b - TrapezoidObstacle._soft_abs(a - b, is_numpy))
+
+    @classmethod
+    def _soft_max_many(cls, vals, is_numpy):
+        out = vals[0]
+        for v in vals[1:]:
+            out = cls._soft_max(out, v, is_numpy)
+        return out
+
+    @classmethod
+    def _soft_min_many(cls, vals, is_numpy):
+        out = vals[0]
+        for v in vals[1:]:
+            out = cls._soft_min(out, v, is_numpy)
+        return out
+
+    # ------------------------------------------------------------------
+    # Approximated SDF
+    # ------------------------------------------------------------------
+    def approximated_sdf(self, x, y):
+        is_numpy = isinstance(x, np.ndarray)
+
+        # ------------------------------------------------------------------
+        # 1) signed distance to each supporting line (half-plane)
+        # ------------------------------------------------------------------
+        half_plane_ds = []
+        for (x0, y0), (x1, y1) in self.edges:
+            # edge vector and outward normal (clockwise vertex order)
+            ex, ey = x1 - x0, y1 - y0
+            nx, ny =  ey, -ex
+            if is_numpy:
+                norm_len = np.sqrt(nx**2 + ny**2 + 1e-6)
+            else:
+                norm_len = ca.sqrt(nx**2 + ny**2 + 1e-6)
+            nx, ny = nx / norm_len, ny / norm_len
+
+            # signed distance of (x,y) to the infinite line, minus margin
+            d = (nx * (x - x0) + ny * (y - y0)) - self.margin
+            half_plane_ds.append(d)
+
+        # ------------------------------------------------------------------
+        # 2) inside term   (negative in the interior, 0 outside)
+        # ------------------------------------------------------------------
+        inner_max = self._soft_max_many(half_plane_ds, is_numpy)
+        inside = self._soft_min(inner_max, 0, is_numpy)
+
+        # ------------------------------------------------------------------
+        # 3) Euclidean distance to the polygon boundary
+        #     – project on each segment, keep the minimum
+        # ------------------------------------------------------------------
+        seg_dists = []
+        for (x0, y0), (x1, y1) in self.edges:
+            ex, ey = x1 - x0, y1 - y0
+            seg_len_sq = ex**2 + ey**2 + 1e-6
+
+            # parametric projection of p on the supporting line
+            t_raw = ((x - x0) * ex + (y - y0) * ey) / seg_len_sq
+
+            # smooth clamp t ∈ [0,1]
+            t0 = self._soft_max(0, t_raw, is_numpy)
+            t  = self._soft_min(1, t0, is_numpy)
+
+            proj_x = x0 + t * ex
+            proj_y = y0 + t * ey
+
+            # distance to the segment
+            diff_sq = (x - proj_x)**2 + (y - proj_y)**2
+            if is_numpy:
+                dist = np.sqrt(diff_sq + 1e-6)
+            else:
+                dist = ca.sqrt(diff_sq + 1e-6)
+            seg_dists.append(dist)
+
+        outside = self._soft_min_many(seg_dists, is_numpy)
+
+        # ------------------------------------------------------------------
+        return outside + inside - self.margin
+
+
 
 class MultiObstacle(IObstacle):
     def __init__(self, obstacles: list[IObstacle]):
@@ -204,3 +386,135 @@ class MultiObstacle(IObstacle):
     def draw(self, ax, **kwargs) -> None:
         for obs in self.obstacles:
             obs.draw(ax, **kwargs)
+
+class ConvexEllipticRing(MultiObstacle):
+    """
+    Convex decomposition of an elliptic half-ring by tiling the region
+    between outer and inner arcs into convex quadrilaterals.
+    """
+    def __init__(
+        self,
+        center: tuple[float, float],
+        semi_axes: tuple[float, float],
+        width: float,
+        angle: float = np.pi,
+        num_arc_points: int = 15,
+        margin: float = 0.0,
+        rotation: float = 0.0,
+    ):
+        cx, cy = center
+        outer_a, outer_b = semi_axes
+        inner_a = outer_a - width
+        inner_b = outer_b - width
+        if inner_a <= 0 or inner_b <= 0:
+            raise ValueError("Width too large for given semi-axes.")
+
+        # 1) sample both arcs at the same t values
+        t = np.linspace(0.0, angle, num_arc_points)
+        outer_raw = [(outer_a * np.cos(ti),  outer_b * np.sin(ti))  for ti in t]
+        inner_raw = [(inner_a * np.cos(ti),  inner_b * np.sin(ti))  for ti in t]
+
+        # 2) rotate & translate into world frame
+        cos_r, sin_r = np.cos(rotation), np.sin(rotation)
+        def transform(pt):
+            x, y = pt
+            xr =  x * cos_r - y * sin_r + cx
+            yr =  x * sin_r + y * cos_r + cy
+            return (xr, yr)
+
+        outer_pts = [transform(p) for p in outer_raw]
+        inner_pts = [transform(p) for p in inner_raw]
+
+        # 3) build quads between corresponding samples
+        convex_pieces: list[IObstacle] = []
+        for i in range(len(t)-1):
+            quad = [
+                outer_pts[i],
+                outer_pts[i+1],
+                inner_pts[i+1],
+                inner_pts[i],
+            ]
+            convex_pieces.append(
+                TrapezoidObstacle(quad, margin=margin))
+
+        # 4) hand off to MultiObstacle
+        super().__init__(convex_pieces)
+
+
+class ConvexSObstacle(MultiObstacle):
+    """
+    Convex decomposition of an elliptic half-ring by tiling the region
+    between outer and inner arcs into convex quadrilaterals.
+    """
+    def __init__(
+        self,
+        center: tuple[float, float],
+        semi_axes: tuple[float, float],
+        width: float,
+        angle: float = np.pi,
+        num_arc_points: int = 15,
+        margin: float = 0.0,
+        rotation: float = 0.0,
+    ):
+        cx, cy = center
+        outer_a, outer_b = semi_axes
+        inner_a = outer_a - width
+        inner_b = outer_b - width
+        if inner_a <= 0 or inner_b <= 0:
+            raise ValueError("Width too large for given semi-axes.")
+
+        # 1) sample both arcs at the same t values
+        t = np.linspace(0.0, angle, num_arc_points)
+        outer_raw = [(outer_a * np.cos(ti),  outer_b * np.sin(ti))  for ti in t]
+        inner_raw = [(inner_a * np.cos(ti),  inner_b * np.sin(ti))  for ti in t]
+
+        # 2) rotate & translate into world frame
+        cos_r, sin_r = np.cos(rotation), np.sin(rotation)
+        def transform(pt):
+            x, y = pt
+            xr =  x * cos_r - y * sin_r + cx
+            yr =  x * sin_r + y * cos_r + cy
+            return (xr, yr)
+
+        outer_pts = [transform(p) for p in outer_raw]
+        inner_pts = [transform(p) for p in inner_raw]
+
+        # 3) build quads between corresponding samples
+        convex_pieces: list[IObstacle] = []
+        for i in range(len(t)-1):
+            quad = [
+                outer_pts[i],
+                outer_pts[i+1],
+                inner_pts[i+1],
+                inner_pts[i],
+            ]
+            convex_pieces.append(TrapezoidObstacle(quad, margin=margin))
+        
+        # 4) second half
+        cx += 0.45
+        t = np.linspace(0.0, -angle, num_arc_points)
+        outer_raw = [(outer_a * np.cos(ti),  outer_b * np.sin(ti))  for ti in t]
+        inner_raw = [(inner_a * np.cos(ti),  inner_b * np.sin(ti))  for ti in t]
+
+        cos_r, sin_r = np.cos(rotation), np.sin(rotation)
+        def transform(pt):
+            x, y = pt
+            xr =  x * cos_r - y * sin_r + cx
+            yr =  x * sin_r + y * cos_r + cy
+            return (xr, yr)
+
+        outer_pts = [transform(p) for p in outer_raw]
+        inner_pts = [transform(p) for p in inner_raw]
+        for i in range(len(t)-1):
+            quad = [
+                outer_pts[i],
+                outer_pts[i+1],
+                inner_pts[i+1],
+                inner_pts[i],
+            ][::-1]
+            convex_pieces.append(TrapezoidObstacle(quad, margin=margin))
+        
+
+        # 4) hand off to MultiObstacle
+        super().__init__(convex_pieces)
+

@@ -1,5 +1,5 @@
 from typing import List, Literal, Union
-
+import numpy as np
 from pydantic import BaseModel, Field, RootModel
 
 from nlotrajectories.core.dynamics import DYNAMICS_CLASS_MAP, Dynamics, IRobotDynamics
@@ -16,6 +16,9 @@ from nlotrajectories.core.sdf.casadi import (
     MultiObstacle,
     PolygonObstacle,
     SquareObstacle,
+    EllipticRingObstacle,
+    TrapezoidObstacle,
+    ConvexSObstacle
 )
 
 
@@ -75,7 +78,59 @@ class PolygonObstacleConfig(BaseModel):
         return PolygonObstacle(points=self.points, margin=self.margin)
 
 
-ObstacleConfigs = list[CircleObstacleConfig | SquareObstacleConfig | PolygonObstacleConfig]
+class EllipticRingObstacleConfig(BaseModel):
+    type: Literal["elliptical_ring"]
+    center: tuple[float, float]
+    semi_axes: tuple[float, float]
+    width: float
+    angle: float = np.pi
+    margin: float = 0.0
+    rotation: float = 0.0
+    num_arc_points: int = 15
+
+    def to_obstacle(self) -> IObstacle:
+        return EllipticRingObstacle(
+            center=self.center,
+            semi_axes=self.semi_axes,
+            width=self.width,
+            angle=self.angle,
+            margin=self.margin,
+            rotation=self.rotation,
+            num_arc_points=self.num_arc_points
+        )
+
+
+class DiscreteSObstacleConfig(BaseModel):
+    type: Literal["discr_s"]
+    center: tuple[float, float]
+    semi_axes: tuple[float, float]
+    width: float
+    angle: float = np.pi
+    margin: float = 0.0
+    rotation: float = 0.0
+    num_arc_points: int = 30
+
+    def to_obstacle(self) -> IObstacle:
+        return ConvexSObstacle(
+            center=self.center,
+            semi_axes=self.semi_axes,
+            width=self.width,
+            angle=self.angle,
+            margin=self.margin,
+            rotation=self.rotation,
+            num_arc_points=self.num_arc_points
+        )
+
+class TrapezoidObstacleConfig(BaseModel):
+    type: Literal["trapezoid"]
+    points: list[tuple[float, float]]
+    margin: float = 0.0
+
+    def to_obstacle(self) -> IObstacle:
+        return TrapezoidObstacle(points=self.points, margin=self.margin)
+
+
+ObstacleConfigs = list[CircleObstacleConfig | SquareObstacleConfig | PolygonObstacleConfig | EllipticRingObstacleConfig | TrapezoidObstacleConfig | DiscreteSObstacleConfig]
 
 
 class ObstacleConfig(RootModel[ObstacleConfigs]):
