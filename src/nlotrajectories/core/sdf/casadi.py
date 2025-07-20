@@ -6,7 +6,6 @@ from matplotlib.patches import Circle
 from matplotlib.patches import Polygon as MplPolygon
 from matplotlib.patches import Rectangle
 from shapely.geometry import Point, Polygon
-
 from nlotrajectories.core.utils import soft_min
 
 
@@ -369,7 +368,6 @@ class TrapezoidObstacle(PolygonObstacle):
 
         # ------------------------------------------------------------------
         return outside + inside - self.margin
-
 
 
 class MultiObstacle(IObstacle):

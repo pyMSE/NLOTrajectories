@@ -82,6 +82,7 @@ def run_benchmark(config_path: Path):
 
         surface_loss_weight = config.model.surface_loss_weight
         eikonal_weight = config.model.eikonal_loss_weight
+
         trainer = NNObstacleTrainer(
             obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
         )
@@ -137,6 +138,7 @@ def run_benchmark(config_path: Path):
 
     start_time = time.time()
     X_opt, U_opt, opti, X_init, status = runner.run()
+
     end_time = time.time()
 
     if status == "failed":
@@ -151,6 +153,7 @@ def run_benchmark(config_path: Path):
         print("Hausdorff:", hausdorff_value)
         print("Chamfer:", chamfer_value)
         print("Surface loss:", surface_loss_value)
+
         return
 
     objective_value = float(opti.debug.value(opti.f))

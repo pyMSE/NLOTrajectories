@@ -131,7 +131,6 @@ class RunBenchmark:
             )
         else:
             raise ValueError(f"Unsupported solver type: {self.solver_type}")
-
         try:
             sol = opti.solve()
         except RuntimeError as e:

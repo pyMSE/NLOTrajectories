@@ -68,5 +68,3 @@ model:
   omega_0: 30                # used only for siren
   surface_loss_weight: 0
   eikonal_loss_weight: 0
-
-
