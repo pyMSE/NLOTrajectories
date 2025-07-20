@@ -15,18 +15,63 @@ def sample_points(
     x_range: tuple[float, float],
     y_range: tuple[float, float],
     n_samples: int,
+    obstacle: IObstacle = None,
+    margin: float = 0.1,
+    boundary_fraction: float = 0.3,
     random: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Sample points in the plane with extra focus around the obstacle boundary.
+
+    Parameters:
+    - x_range, y_range: domain bounds
+    - n_samples: total number of points to sample
+    - obstacle: an object with sdf(x, y) method (numpy-based)
+    - margin: band width around boundary for extra sampling
+    - boundary_fraction: % of points to sample near the obstacle boundary
+    - random: random or grid global sampling
+    """
+    n_boundary = int(n_samples * boundary_fraction)
+    n_global = n_samples - n_boundary
+
+    # Step 1: global samples
     if random:
-        xs = np.random.uniform(*x_range, size=n_samples)
-        ys = np.random.uniform(*y_range, size=n_samples)
+        xs = np.random.uniform(*x_range, size=n_global)
+        ys = np.random.uniform(*y_range, size=n_global)
     else:
-        side = int(np.sqrt(n_samples))
+        side = int(np.sqrt(n_global))
         xs = np.linspace(*x_range, side)
         ys = np.linspace(*y_range, side)
         xs, ys = np.meshgrid(xs, ys)
         xs, ys = xs.ravel(), ys.ravel()
+
+    # Step 2: boundary-focused samples (only if obstacle is provided)
+    if obstacle is not None and n_boundary > 0:
+        bx, by = [], []
+        tries = 0
+        max_tries = n_boundary * 10
+        while len(bx) < n_boundary and tries < max_tries:
+            x_candidates = np.random.uniform(*x_range, size=n_boundary)
+            y_candidates = np.random.uniform(*y_range, size=n_boundary)
+            sdf_vals = obstacle.sdf(x_candidates, y_candidates)
+            mask = np.abs(sdf_vals) < margin
+            bx.extend(x_candidates[mask])
+            by.extend(y_candidates[mask])
+            tries += 1
+        bx = np.array(bx[:n_boundary])
+        by = np.array(by[:n_boundary])
+        xs = np.concatenate([xs, bx])
+        ys = np.concatenate([ys, by])
+
     return xs, ys
+
+
+def initialize_weights(model):
+    for layer in model.modules():
+        if isinstance(layer, nn.Linear):  # Apply to linear layers
+            nn.init.kaiming_uniform_(layer.weight, nonlinearity="relu")  # Xavier initialization
+            if layer.bias is not None:
+                nn.init.zeros_(layer.bias)  # Initialize biases to zero
 
 
 class NNObstacleTrainer:
@@ -38,7 +83,8 @@ class NNObstacleTrainer:
         epochs: int = 100,
         eikonal_weight: float = 0,
         surface_loss_weight: float = 0,
-        n_samples: int = 20000,
+        n_samples: int = 200000,
+        boundary_fraction: float = 0.3,
         random: bool = True,
         batch_size: int = 256,
         lr: float = 1e-3,
@@ -49,13 +95,18 @@ class NNObstacleTrainer:
         self.device = device
         self.model = model.to(device)
 
+        # Initialize model weights with Xavier initialization for ReLU activations
+        initialize_weights(self.model)  # Initialize weights
+
         self.epochs = epochs
         self.eikonal_weight = eikonal_weight
         self.surface_loss_weight = surface_loss_weight
         self.n_samples = n_samples
+        self.boundary_fraction = boundary_fraction
         self.random = random
         self.batch_size = batch_size
         self.lr = lr
+        print(f"Using surface loss weight: {self.surface_loss_weight}, eikonal weight: {self.eikonal_weight}")
 
     def generate_data(
         self,
@@ -64,7 +115,7 @@ class NNObstacleTrainer:
         n_samples: int,
         random: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        xs, ys = sample_points(x_range, y_range, n_samples, random)
+        xs, ys = sample_points(x_range, y_range, n_samples, self.obstacle, self.boundary_fraction, random=random)
         sdf_vals = np.array([self.obstacle.sdf(x, y) for x, y in zip(xs, ys)])
 
         inputs = torch.tensor(np.stack([xs, ys], axis=1), dtype=torch.float32)
@@ -180,7 +231,9 @@ class NNObstacleTrainer:
 class NNObstacle(IObstacle):
     def __init__(self, obstacle: IObstacle, model: l4c.L4CasADi):
         self.obstacle = obstacle
-        self.model = model.to("cpu")
+        self.model = model
+        if type(model) is l4c.naive.MultiLayerPerceptron:
+            self.model = model.to("cpu")
 
     def sdf(self, x: ca.MX, y: ca.MX) -> float:
         return self.obstacle.sdf(x, y)
