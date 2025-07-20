@@ -6,6 +6,7 @@ from matplotlib.patches import Circle
 from matplotlib.patches import Polygon as MplPolygon
 from matplotlib.patches import Rectangle
 from shapely.geometry import Point, Polygon
+
 from nlotrajectories.core.utils import soft_min
 
 
@@ -188,6 +189,7 @@ class PolygonObstacle(IObstacle):
         polygon_patch = MplPolygon(self.points, closed=True, **kwargs)
         ax.add_patch(polygon_patch)
 
+
 class EllipticRingObstacle(PolygonObstacle):
     def __init__(
         self,
@@ -202,7 +204,7 @@ class EllipticRingObstacle(PolygonObstacle):
         """
         An elliptic half-ring obstacle: the region between outer and inner ellipses,
         only for the “upper” part (from angle 0 to `angle`).
-        
+
         Args:
             center: (x, y) coordinates of the ellipse center.
             semi_axes: Tuple (a, b) where 'a' is the semi-major axis, 'b' is the semi-minor axis of the outer ellipse.
@@ -245,6 +247,7 @@ class EllipticRingObstacle(PolygonObstacle):
 
         super().__init__(points=rotated_translated_points, margin=margin)
 
+
 class TrapezoidObstacle(PolygonObstacle):
     """
     Axis-aligned trapezoid with horizontal bases.
@@ -257,6 +260,7 @@ class TrapezoidObstacle(PolygonObstacle):
     height : float               # total height
     margin : float, optional     # safety margin
     """
+
     def __init__(
         self,
         points: list[tuple[float, float]],
@@ -320,7 +324,7 @@ class TrapezoidObstacle(PolygonObstacle):
         for (x0, y0), (x1, y1) in self.edges:
             # edge vector and outward normal (clockwise vertex order)
             ex, ey = x1 - x0, y1 - y0
-            nx, ny =  ey, -ex
+            nx, ny = ey, -ex
             if is_numpy:
                 norm_len = np.sqrt(nx**2 + ny**2 + 1e-6)
             else:
@@ -351,13 +355,13 @@ class TrapezoidObstacle(PolygonObstacle):
 
             # smooth clamp t ∈ [0,1]
             t0 = self._soft_max(0, t_raw, is_numpy)
-            t  = self._soft_min(1, t0, is_numpy)
+            t = self._soft_min(1, t0, is_numpy)
 
             proj_x = x0 + t * ex
             proj_y = y0 + t * ey
 
             # distance to the segment
-            diff_sq = (x - proj_x)**2 + (y - proj_y)**2
+            diff_sq = (x - proj_x) ** 2 + (y - proj_y) ** 2
             if is_numpy:
                 dist = np.sqrt(diff_sq + 1e-6)
             else:
@@ -385,11 +389,13 @@ class MultiObstacle(IObstacle):
         for obs in self.obstacles:
             obs.draw(ax, **kwargs)
 
+
 class ConvexEllipticRing(MultiObstacle):
     """
     Convex decomposition of an elliptic half-ring by tiling the region
     between outer and inner arcs into convex quadrilaterals.
     """
+
     def __init__(
         self,
         center: tuple[float, float],
@@ -409,15 +415,16 @@ class ConvexEllipticRing(MultiObstacle):
 
         # 1) sample both arcs at the same t values
         t = np.linspace(0.0, angle, num_arc_points)
-        outer_raw = [(outer_a * np.cos(ti),  outer_b * np.sin(ti))  for ti in t]
-        inner_raw = [(inner_a * np.cos(ti),  inner_b * np.sin(ti))  for ti in t]
+        outer_raw = [(outer_a * np.cos(ti), outer_b * np.sin(ti)) for ti in t]
+        inner_raw = [(inner_a * np.cos(ti), inner_b * np.sin(ti)) for ti in t]
 
         # 2) rotate & translate into world frame
         cos_r, sin_r = np.cos(rotation), np.sin(rotation)
+
         def transform(pt):
             x, y = pt
-            xr =  x * cos_r - y * sin_r + cx
-            yr =  x * sin_r + y * cos_r + cy
+            xr = x * cos_r - y * sin_r + cx
+            yr = x * sin_r + y * cos_r + cy
             return (xr, yr)
 
         outer_pts = [transform(p) for p in outer_raw]
@@ -425,15 +432,14 @@ class ConvexEllipticRing(MultiObstacle):
 
         # 3) build quads between corresponding samples
         convex_pieces: list[IObstacle] = []
-        for i in range(len(t)-1):
+        for i in range(len(t) - 1):
             quad = [
                 outer_pts[i],
-                outer_pts[i+1],
-                inner_pts[i+1],
+                outer_pts[i + 1],
+                inner_pts[i + 1],
                 inner_pts[i],
             ]
-            convex_pieces.append(
-                TrapezoidObstacle(quad, margin=margin))
+            convex_pieces.append(TrapezoidObstacle(quad, margin=margin))
 
         # 4) hand off to MultiObstacle
         super().__init__(convex_pieces)
@@ -444,6 +450,7 @@ class ConvexSObstacle(MultiObstacle):
     Convex decomposition of an elliptic half-ring by tiling the region
     between outer and inner arcs into convex quadrilaterals.
     """
+
     def __init__(
         self,
         center: tuple[float, float],
@@ -463,15 +470,16 @@ class ConvexSObstacle(MultiObstacle):
 
         # 1) sample both arcs at the same t values
         t = np.linspace(0.0, angle, num_arc_points)
-        outer_raw = [(outer_a * np.cos(ti),  outer_b * np.sin(ti))  for ti in t]
-        inner_raw = [(inner_a * np.cos(ti),  inner_b * np.sin(ti))  for ti in t]
+        outer_raw = [(outer_a * np.cos(ti), outer_b * np.sin(ti)) for ti in t]
+        inner_raw = [(inner_a * np.cos(ti), inner_b * np.sin(ti)) for ti in t]
 
         # 2) rotate & translate into world frame
         cos_r, sin_r = np.cos(rotation), np.sin(rotation)
+
         def transform(pt):
             x, y = pt
-            xr =  x * cos_r - y * sin_r + cx
-            yr =  x * sin_r + y * cos_r + cy
+            xr = x * cos_r - y * sin_r + cx
+            yr = x * sin_r + y * cos_r + cy
             return (xr, yr)
 
         outer_pts = [transform(p) for p in outer_raw]
@@ -479,40 +487,39 @@ class ConvexSObstacle(MultiObstacle):
 
         # 3) build quads between corresponding samples
         convex_pieces: list[IObstacle] = []
-        for i in range(len(t)-1):
+        for i in range(len(t) - 1):
             quad = [
                 outer_pts[i],
-                outer_pts[i+1],
-                inner_pts[i+1],
+                outer_pts[i + 1],
+                inner_pts[i + 1],
                 inner_pts[i],
             ]
             convex_pieces.append(TrapezoidObstacle(quad, margin=margin))
-        
+
         # 4) second half
         cx += 0.45
         t = np.linspace(0.0, -angle, num_arc_points)
-        outer_raw = [(outer_a * np.cos(ti),  outer_b * np.sin(ti))  for ti in t]
-        inner_raw = [(inner_a * np.cos(ti),  inner_b * np.sin(ti))  for ti in t]
+        outer_raw = [(outer_a * np.cos(ti), outer_b * np.sin(ti)) for ti in t]
+        inner_raw = [(inner_a * np.cos(ti), inner_b * np.sin(ti)) for ti in t]
 
         cos_r, sin_r = np.cos(rotation), np.sin(rotation)
+
         def transform(pt):
             x, y = pt
-            xr =  x * cos_r - y * sin_r + cx
-            yr =  x * sin_r + y * cos_r + cy
+            xr = x * cos_r - y * sin_r + cx
+            yr = x * sin_r + y * cos_r + cy
             return (xr, yr)
 
         outer_pts = [transform(p) for p in outer_raw]
         inner_pts = [transform(p) for p in inner_raw]
-        for i in range(len(t)-1):
+        for i in range(len(t) - 1):
             quad = [
                 outer_pts[i],
-                outer_pts[i+1],
-                inner_pts[i+1],
+                outer_pts[i + 1],
+                inner_pts[i + 1],
                 inner_pts[i],
             ][::-1]
             convex_pieces.append(TrapezoidObstacle(quad, margin=margin))
-        
 
         # 4) hand off to MultiObstacle
         super().__init__(convex_pieces)
-

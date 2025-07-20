@@ -1,12 +1,11 @@
-import math
 import random
 from abc import ABC, abstractmethod
 from enum import Enum
 
 import numpy as np
-from scipy.interpolate import interp1d, splev, splprep, CubicSpline
+from scipy.interpolate import CubicSpline
 
-from nlotrajectories.core.geometry import DotGeometry, IRobotGeometry, RectangleGeometry
+from nlotrajectories.core.geometry import IRobotGeometry, RectangleGeometry
 
 
 class Initializer(str, Enum):
@@ -158,7 +157,7 @@ class RRTInitializer(TrajectoryInitializer):
         cs_y = CubicSpline(s, points[:, 1])
         s_new = np.linspace(0, 1, num_points)
         return np.vstack((cs_x(s_new), cs_y(s_new))).T
-    
+
     def insert_intermediate_points(self, points, max_angle_deg=60):
         new_points = [points[0]]
         for i in range(1, len(points) - 1):

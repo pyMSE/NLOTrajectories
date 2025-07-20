@@ -7,6 +7,7 @@ from matplotlib.patches import Polygon
 
 from nlotrajectories.core.geometry import DotGeometry
 
+
 def plot_sampling(obstacles, xs=None, ys=None, title="Sampling", goal=None):
     path = Path("result")
     path.mkdir(parents=True, exist_ok=True)
@@ -18,7 +19,7 @@ def plot_sampling(obstacles, xs=None, ys=None, title="Sampling", goal=None):
 
     # Plot sampling points if provided
     if xs is not None and ys is not None:
-        ax.scatter(xs, ys, s=0.1, c='b', alpha=0.1, label="Samples")
+        ax.scatter(xs, ys, s=0.1, c="b", alpha=0.1, label="Samples")
 
     ax.set_aspect("equal")
     ax.set_yticklabels([])

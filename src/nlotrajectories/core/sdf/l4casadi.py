@@ -115,14 +115,7 @@ class NNObstacleTrainer:
         n_samples: int,
         random: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        xs, ys = sample_points(
-            x_range, 
-            y_range, 
-            n_samples, 
-            self.obstacle, 
-            self.boundary_fraction, 
-            random=random
-        )
+        xs, ys = sample_points(x_range, y_range, n_samples, self.obstacle, self.boundary_fraction, random=random)
         sdf_vals = np.array([self.obstacle.sdf(x, y) for x, y in zip(xs, ys)])
 
         inputs = torch.tensor(np.stack([xs, ys], axis=1), dtype=torch.float32)

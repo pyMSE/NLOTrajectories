@@ -86,12 +86,12 @@ def run_benchmark(config_path: Path):
         eikonal_weight = config.model.eikonal_loss_weight
 
         trainer = NNObstacleTrainer(
-            obstacles, 
-            model, 
-            n_samples=n_samples, 
-            boundary_fraction=boundary_fraction, 
-            eikonal_weight=eikonal_weight, 
-            surface_loss_weight=surface_loss_weight
+            obstacles,
+            model,
+            n_samples=n_samples,
+            boundary_fraction=boundary_fraction,
+            eikonal_weight=eikonal_weight,
+            surface_loss_weight=surface_loss_weight,
         )
         trainer.train((-0.5, 1.5), (-0.5, 1.5))
         if type(model) is l4c.naive.MultiLayerPerceptron:
