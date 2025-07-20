@@ -58,6 +58,8 @@ def run_benchmark(config_path: Path):
         num_hidden_layers = config.model.num_hidden_layers
         activation_function = config.model.activation_function
         omega_0 = config.model.omega_0
+        n_samples = config.model.n_samples
+        boundary_fraction = config.model.boundary_fraction
 
         if model_type == "mlp":
             model = l4c.naive.MultiLayerPerceptron(2, hidden_dim, 1, num_hidden_layers, activation_function)
@@ -84,7 +86,12 @@ def run_benchmark(config_path: Path):
         eikonal_weight = config.model.eikonal_loss_weight
 
         trainer = NNObstacleTrainer(
-            obstacles, model, eikonal_weight=eikonal_weight, surface_loss_weight=surface_loss_weight
+            obstacles, 
+            model, 
+            n_samples=n_samples, 
+            boundary_fraction=boundary_fraction, 
+            eikonal_weight=eikonal_weight, 
+            surface_loss_weight=surface_loss_weight
         )
         trainer.train((-0.5, 1.5), (-0.5, 1.5))
         if type(model) is l4c.naive.MultiLayerPerceptron:

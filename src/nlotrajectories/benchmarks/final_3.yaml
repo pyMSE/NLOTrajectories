@@ -63,6 +63,8 @@ model:
   hidden_dim: 128
   num_hidden_layers: 2
   activation_function: ReLU  # ignore for siren and fourier
-  omega_0: 30                # used only for siren
+  omega_0: 30 # used only for siren
+  n_samples: 1000000    
+  boundary_fraction: 0.8  
   surface_loss_weight: 1.0
   eikonal_loss_weight: 0.01

@@ -84,6 +84,7 @@ class NNObstacleTrainer:
         eikonal_weight: float = 0,
         surface_loss_weight: float = 0,
         n_samples: int = 200000,
+        boundary_fraction: float = 0.3,
         random: bool = True,
         batch_size: int = 256,
         lr: float = 1e-3,
@@ -101,6 +102,7 @@ class NNObstacleTrainer:
         self.eikonal_weight = eikonal_weight
         self.surface_loss_weight = surface_loss_weight
         self.n_samples = n_samples
+        self.boundary_fraction = boundary_fraction
         self.random = random
         self.batch_size = batch_size
         self.lr = lr
@@ -113,7 +115,14 @@ class NNObstacleTrainer:
         n_samples: int,
         random: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        xs, ys = sample_points(x_range, y_range, n_samples, self.obstacle, random=random)
+        xs, ys = sample_points(
+            x_range, 
+            y_range, 
+            n_samples, 
+            self.obstacle, 
+            self.boundary_fraction, 
+            random=random
+        )
         sdf_vals = np.array([self.obstacle.sdf(x, y) for x, y in zip(xs, ys)])
 
         inputs = torch.tensor(np.stack([xs, ys], axis=1), dtype=torch.float32)
