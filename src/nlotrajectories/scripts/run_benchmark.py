@@ -82,7 +82,7 @@ def run_benchmark(config_path: Path, verbose: bool = True):
 
     if not verbose:
         return X_opt
-    
+
     print("Objective value:", objective_value)
     print("Computation time for the solver:", solver_time)
 
@@ -136,6 +136,7 @@ def run_benchmark(config_path: Path, verbose: bool = True):
                 f"{chamfer_value:6f},{surface_loss_value:6f}\n"
             )
     return X_opt
+
 
 def main():
     parser = argparse.ArgumentParser()

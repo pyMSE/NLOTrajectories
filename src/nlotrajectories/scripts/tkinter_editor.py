@@ -8,7 +8,7 @@ import numpy as np
 import yaml
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import Circle, Rectangle
-from scripts.run_benchmark import run_benchmark
+from run_benchmark import run_benchmark
 
 
 class SimplePlannerUI:
@@ -44,26 +44,22 @@ class SimplePlannerUI:
 
         # Start and goal sliders
         tk.Label(frame, text="Start X").pack()
-        self.start_x = tk.Scale(frame, from_=0, to=1, resolution=0.01,
-                                orient=tk.HORIZONTAL, command=self.update_start)
+        self.start_x = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_start)
         self.start_x.set(self.start[0])
         self.start_x.pack()
 
         tk.Label(frame, text="Start Y").pack()
-        self.start_y = tk.Scale(frame, from_=0, to=1, resolution=0.01,
-                                orient=tk.HORIZONTAL, command=self.update_start)
+        self.start_y = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_start)
         self.start_y.set(self.start[1])
         self.start_y.pack()
 
         tk.Label(frame, text="Goal X").pack()
-        self.goal_x = tk.Scale(frame, from_=0, to=1, resolution=0.01,
-                               orient=tk.HORIZONTAL, command=self.update_goal)
+        self.goal_x = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_goal)
         self.goal_x.set(self.goal[0])
         self.goal_x.pack()
 
         tk.Label(frame, text="Goal Y").pack()
-        self.goal_y = tk.Scale(frame, from_=0, to=1, resolution=0.01,
-                               orient=tk.HORIZONTAL, command=self.update_goal)
+        self.goal_y = tk.Scale(frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=self.update_goal)
         self.goal_y.set(self.goal[1])
         self.goal_y.pack()
 
@@ -121,10 +117,7 @@ class SimplePlannerUI:
 
     def add_obstacle(self):
         if len(self.obstacles) >= self.MAX_OBSTACLES:
-            messagebox.showerror(
-                "Limit reached",
-                f"Cannot add more than {self.MAX_OBSTACLES} obstacles."
-            )
+            messagebox.showerror("Limit reached", f"Cannot add more than {self.MAX_OBSTACLES} obstacles.")
             return
 
         try:
@@ -156,7 +149,7 @@ class SimplePlannerUI:
                 if (x - ox) ** 2 + (y - oy) ** 2 <= size**2:
                     return True
             elif otype == "square":
-                if ox - size/2 <= x <= ox + size/2 and oy - size/2 <= y <= oy + size/2:
+                if ox - size / 2 <= x <= ox + size / 2 and oy - size / 2 <= y <= oy + size / 2:
                     return True
         return False
 
@@ -168,8 +161,7 @@ class SimplePlannerUI:
         self.update_plot(preserve_optimized=True)
 
     def draw_path(self, event):
-        if self.drawing and event.inaxes == self.ax \
-           and event.xdata is not None and event.ydata is not None:
+        if self.drawing and event.inaxes == self.ax and event.xdata is not None and event.ydata is not None:
             self.trajectory.append((event.xdata, event.ydata))
             self.update_plot(preserve_optimized=True)
 
@@ -202,25 +194,13 @@ class SimplePlannerUI:
 
         for x, y, size, otype in self.obstacles:
             if otype == "circle":
-                config["obstacles"].append({
-                    "type": "circle",
-                    "center": [x, y],
-                    "radius": size,
-                    "margin": 0.05
-                })
+                config["obstacles"].append({"type": "circle", "center": [x, y], "radius": size, "margin": 0.05})
             elif otype == "square":
-                config["obstacles"].append({
-                    "type": "square",
-                    "center": [x, y],
-                    "size": size,
-                    "margin": 0.05
-                })
+                config["obstacles"].append({"type": "square", "center": [x, y], "size": size, "margin": 0.05})
 
         folder = Path("configs")
         folder.mkdir(exist_ok=True)
-        self.config = folder / Path(
-            f"config_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.yaml"
-        )
+        self.config = folder / Path(f"config_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.yaml")
         with open(self.config, "w") as f:
             yaml.dump(config, f, sort_keys=False, default_flow_style=None)
 
@@ -261,7 +241,7 @@ class SimplePlannerUI:
                 circ = Circle((x, y), size, color="gray", alpha=0.5)
                 self.ax.add_patch(circ)
             elif otype == "square":
-                sq = Rectangle((x - size/2, y - size/2), size, size, color="blue", alpha=0.5)
+                sq = Rectangle((x - size / 2, y - size / 2), size, size, color="blue", alpha=0.5)
                 self.ax.add_patch(sq)
             self.ax.text(x, y, str(idx), fontsize=8, ha="center", va="center")
 
@@ -294,10 +274,7 @@ class SimplePlannerUI:
         title = "You won!" if hand_cost <= opt_cost else "The optimization had lower cost"
 
         # Build message text
-        msg = (
-            f"Hand-drawn trajectory cost: {hand_cost:.4f}\n"
-            f"Optimized trajectory cost: {opt_cost:.4f}"
-        )
+        msg = f"Hand-drawn trajectory cost: {hand_cost:.4f}\n" f"Optimized trajectory cost: {opt_cost:.4f}"
 
         # Show popup
         messagebox.showinfo(title, msg)
