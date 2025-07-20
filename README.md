@@ -49,3 +49,16 @@ Before pushing any changes, make sure code formatting and linting passes:
 ```bash
 poetry run make pretty lint
 ```
+
+
+## Frontend
+
+Interactive widget for designing benchmark scenarios with point mass robot and convex obstacles: 
+
+```bash
+poetry run python src/nlotrajectories/scripts/tkinter_editor.py
+```
+
+![Alt text](docs/frontend.png?raw=true "Title")
+
+
