@@ -3,31 +3,35 @@ body:
   dynamic: unicycle_2nd
   goal_mode: center
   length: 0.2
-  width: 0.1
+  width: 0.08
   start_state: [0.0, 0.0, 0.785, 0.0, 0.0]
-  goal_state: [1.0, 1.0,0.785, 0.0, 0.0]
-  control_bounds: 
-    - [-2.0, 2.0]
-    - [-2.0, 2.0]
+  goal_state: [1.0, 1.0, 0.785, 0.0, 0.0]
+  control_bounds:
+    - [-1.0,  1.0]
+    - [-1.0,  1.0]
 
 obstacles:
   - type: circle
-    center: [0.5, 0.5]
-    radius: 0.2
-    margin: 0.05
-  # - type: square
-  #  center: [0.5, 0.5]
-  #  size: 0.4
-  #  margin: 0
+    center: [0.6, 0.6]
+    radius: 0.15
+    margin: 0.0
+  - type: square
+    center: [0.8, 0.2]
+    size: 0.35
+    margin: 0.0
+  - type: square
+    center: [0.0, 0.3]
+    size: 0.1
+    margin: 0.0
 
 solver:
-  N: 50
+  N: 40
   dt: 0.1
   use_slack: true
-  slack_penalty: 50
+  slack_penalty: 10
   use_smooth:  false 
   smooth_weight: 0.2
-  mode: casadi  # if l4casadi, learned sdf will be used
+  mode: l4casadi  # if casadi, learned sdf will be used
   initializer:
     - mode: rrt
       rrt_bounds:
@@ -46,5 +50,5 @@ model:
   num_hidden_layers: 2
   activation_function: ReLU  # ignore for siren and fourier
   omega_0: 30                # used only for siren
-  surface_loss_weight: 0
-  eikonal_loss_weight: 0
+  surface_loss_weight: 1.0
+  eikonal_loss_weight: 0.005
