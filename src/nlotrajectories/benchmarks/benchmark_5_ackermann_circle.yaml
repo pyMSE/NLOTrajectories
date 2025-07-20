@@ -8,8 +8,8 @@ body:
   start_state: [0, 0, 0, 0.0, 0.0, 0.0, 0.0]
   goal_state: [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   control_bounds: 
+    - [-1.0,  1.0]
     - [-2.0,  2.0]
-    - [-3.0,  3.0]
 
 obstacles:
   - type: circle
