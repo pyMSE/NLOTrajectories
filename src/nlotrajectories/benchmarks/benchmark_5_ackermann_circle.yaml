@@ -1,23 +1,20 @@
 body:
   shape: rectangle
-  dynamic: unicycle_2nd
+  dynamic: ackermann_2nd #ackermann_2nd
   goal_mode: center
-  length: 0.2
+  length: 0.1
   width: 0.1
-  start_state: [0.0, 0.0, 0.785, 0.0, 0.0]
-  goal_state: [1.0, 1.0, 0.785, 0.0, 0.0]
-  control_bounds:
+  wheelbase: 0.1
+  start_state: [0, 0, 0, 0.0, 0.0, 0.0, 0.0]
+  goal_state: [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  control_bounds: 
     - [-2.0,  2.0]
-    - [-2.0,  2.0]
+    - [-3.0,  3.0]
 
 obstacles:
   - type: circle
     center: [0.5, 0.5]
     radius: 0.2
-    margin: 0.01
-  - type: circle
-    center: [0.5, 1.1]
-    radius: 0.05
     margin: 0.01
   - type: square
     center: [1.2, 0.37]
@@ -31,23 +28,16 @@ obstacles:
     center: [0.2, 0.9]
     size: 0.1
     margin: 0.01
-  - type: square
-    center: [0.4, 0.1]
-    size: 0.1
-    margin: 0.01
-  - type: square
-    center: [0.6, 0.1]
-    size: 0.1
-    margin: 0.01
+
 
 solver:
-  N: 80
-  dt: 0.04
+  N: 30
+  dt: 0.1
   use_slack: true
-  slack_penalty: 50
+  slack_penalty: 1
   use_smooth:  false 
   smooth_weight: 0.2
-  mode: l4casadi  # if l4casadi, learned sdf will be used
+  mode: casadi
   initializer:
     - mode: rrt
       rrt_bounds:
@@ -56,9 +46,9 @@ solver:
       step_size: 0.02
       max_iter: 5000
       margin: 0.0
-    #- mode: linear #linear
+    #- mode: default #linear
   enforce_heading: false # enforce theta = theta_goal
-  #type: ipopt #options: ipopt, sq
+  type: ipopt
 
 model:
   type: mlp  # options: siren, fourier, mlp
@@ -66,5 +56,5 @@ model:
   num_hidden_layers: 2
   activation_function: ReLU  # ignore for siren and fourier
   omega_0: 30                # used only for siren
-  surface_loss_weight: 0
-  eikonal_loss_weight: 0
+  surface_loss_weight: 1.0
+  eikonal_loss_weight: 0.01

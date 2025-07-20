@@ -66,6 +66,14 @@ def sample_points(
     return xs, ys
 
 
+def initialize_weights(model):
+    for layer in model.modules():
+        if isinstance(layer, nn.Linear):  # Apply to linear layers
+            nn.init.kaiming_uniform_(layer.weight, nonlinearity="relu")  # Xavier initialization
+            if layer.bias is not None:
+                nn.init.zeros_(layer.bias)  # Initialize biases to zero
+
+
 class NNObstacleTrainer:
     def __init__(
         self,
@@ -76,6 +84,7 @@ class NNObstacleTrainer:
         eikonal_weight: float = 0,
         surface_loss_weight: float = 0,
         n_samples: int = 200000,
+        boundary_fraction: float = 0.3,
         random: bool = True,
         batch_size: int = 256,
         lr: float = 1e-3,
@@ -86,13 +95,18 @@ class NNObstacleTrainer:
         self.device = device
         self.model = model.to(device)
 
+        # Initialize model weights with Xavier initialization for ReLU activations
+        initialize_weights(self.model)  # Initialize weights
+
         self.epochs = epochs
         self.eikonal_weight = eikonal_weight
         self.surface_loss_weight = surface_loss_weight
         self.n_samples = n_samples
+        self.boundary_fraction = boundary_fraction
         self.random = random
         self.batch_size = batch_size
         self.lr = lr
+        print(f"Using surface loss weight: {self.surface_loss_weight}, eikonal weight: {self.eikonal_weight}")
 
     def generate_data(
         self,
@@ -101,7 +115,14 @@ class NNObstacleTrainer:
         n_samples: int,
         random: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        xs, ys = sample_points(x_range, y_range, n_samples, self.obstacle, random=random)
+        xs, ys = sample_points(
+            x_range, 
+            y_range, 
+            n_samples, 
+            self.obstacle, 
+            self.boundary_fraction, 
+            random=random
+        )
         sdf_vals = np.array([self.obstacle.sdf(x, y) for x, y in zip(xs, ys)])
 
         inputs = torch.tensor(np.stack([xs, ys], axis=1), dtype=torch.float32)
@@ -217,7 +238,9 @@ class NNObstacleTrainer:
 class NNObstacle(IObstacle):
     def __init__(self, obstacle: IObstacle, model: l4c.L4CasADi):
         self.obstacle = obstacle
-        self.model = model.to("cpu")
+        self.model = model
+        if type(model) is l4c.naive.MultiLayerPerceptron:
+            self.model = model.to("cpu")
 
     def sdf(self, x: ca.MX, y: ca.MX) -> float:
         return self.obstacle.sdf(x, y)
