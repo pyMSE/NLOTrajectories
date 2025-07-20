@@ -182,14 +182,48 @@ class SimplePlannerUI:
         config = {
             "body": {
                 "shape": "dot",
-                "dynamic": "point_2nd",
+                "dynamic": "point_2nd",  # point_1st
                 "goal_mode": "center",
                 "start_state": [self.start[0], self.start[1], 0.0, 0.0],
                 "goal_state": [self.goal[0], self.goal[1], 0.0, 0.0],
-                "control_bounds": [-1.0, 1.0],
+                "control_bounds": [
+                    [-1.0, 1.0],
+                    [-1.0, 1.0],
+                ],
             },
-            "obstacles": [],
-            "solver": {"N": 40, "dt": 0.1, "mode": "casadi"},
+            "obstacles": [],  # or populate as needed
+            "solver": {
+                "N": 40,
+                "dt": 0.1,
+                "use_slack": True,
+                "slack_penalty": 50,
+                "use_smooth": False,
+                "smooth_weight": 0.2,
+                "mode": "casadi",  # if l4casadi, learned sdf will be used
+                "initializer": [
+                    {
+                        "mode": "rrt",
+                        "rrt_bounds": [
+                            [self.start[0], self.start[1]],
+                            [self.goal[0], self.goal[1]],
+                        ],
+                        "step_size": 0.02,
+                        "max_iter": 5000,
+                        "margin": 0.0,
+                    }
+                ],
+                "enforce_heading": False,
+                "type": "ipopt",
+            },
+            "model": {
+                "type": "mlp",  # or "naive"
+                "hidden_dim": 128,
+                "num_hidden_layers": 2,
+                "activation_function": "ReLU",  # ignore for siren and fourier
+                "omega_0": 30,  # used only for siren
+                "surface_loss_weight": 0,
+                "eikonal_loss_weight": 0,
+            },
         }
 
         for x, y, size, otype in self.obstacles:
